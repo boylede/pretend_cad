@@ -6,4 +6,12 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7.2"
+amethyst = "0.13.2"
 specs = "0.15.1"
+
+[features]
+default = ["vulkan"]
+empty = ["amethyst/empty"]
+metal = ["amethyst/metal"]
+vulkan = ["amethyst/vulkan"]
+nightly = ["amethyst/nightly"]

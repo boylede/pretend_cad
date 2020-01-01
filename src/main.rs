@@ -1,6 +1,17 @@
 use specs::prelude::*;
 use rand::prelude::*;
-
+use amethyst::{
+    prelude::*,
+    window::DisplayConfig,
+    renderer::{
+        RenderingBundle,
+        types::DefaultBackend,
+        plugins::{
+            RenderDebugLines,
+            RenderToWindow
+        },
+    },
+};
 
 type Layers = GenerationVec<Layer>;
 
@@ -168,6 +179,8 @@ fn make_line(style: GenerationID<LineType>, layer: GenerationID<Layer>) -> Drawa
 }
 
 fn main() {
+
+
     let mut world = World::new();
     world.register::<Drawable>();
     
@@ -210,4 +223,42 @@ fn main() {
     };
     
 
+}
+
+struct NullState;
+
+impl SimpleState for NullState {
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+    }
+
+    fn update(&mut self, _: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        Trans::None
+    }
+}
+
+
+fn run_app() ->  amethyst::Result<()> {
+    amethyst::start_logger(Default::default());
+    let app_root = amethyst::utils::application_root_dir()?;
+
+    let display_config = DisplayConfig::default();
+    
+    let game_data = GameDataBuilder::default()
+        // .with(ExampleLinesSystem::new(), "example_lines_system", &[])
+        // .with_bundle(TransformBundle::new())?
+        .with_bundle(
+            RenderingBundle::<DefaultBackend>::new()
+                .with_plugin(
+                    RenderToWindow::from_config(display_config)
+                        .with_clear([0.0, 0.0, 0.0, 1.0]),
+                )
+                .with_plugin(RenderDebugLines::default()),
+        )?;
+
+    let mut game = Application::new("", NullState, game_data)?;
+    
+    game.run();
+
+
+    Ok(())
 }
