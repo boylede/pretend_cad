@@ -1,0 +1,9 @@
+[package]
+name = "pretend_cad"
+version = "0.1.0"
+authors = ["Daniel Boyle <boylede@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.7.2"
+legion = "0.2.1"
