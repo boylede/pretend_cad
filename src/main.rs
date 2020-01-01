@@ -1,4 +1,4 @@
-use legion::prelude::*;
+use specs::prelude::*;
 use rand::prelude::*;
 
 
@@ -117,6 +117,10 @@ enum Drawable {
     NamedGroup(Group),
 }
 
+impl Component for Drawable {
+    type Storage = VecStorage<Self>;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Point {
     x: f32,
@@ -164,8 +168,8 @@ fn make_line(style: GenerationID<LineType>, layer: GenerationID<Layer>) -> Drawa
 }
 
 fn main() {
-    let universe = Universe::new();
-    let mut world = universe.create_world();
+    let mut world = World::new();
+    world.register::<Drawable>();
     
     let continous_line = LineType {draw_line: line_type_continous};
     let hidden_line = LineType {draw_line: line_type_hidden};
@@ -173,7 +177,7 @@ fn main() {
     let linetype_id = line_types.push(continous_line);
     line_types.push(hidden_line);
 
-    world.resources.insert(line_types);
+    world.insert(line_types);
 
     let first_layer = Layer {
         name: "Zero".to_string(),
@@ -186,20 +190,20 @@ fn main() {
     let mut layers = Layers::new();
     let layer_id = layers.push(first_layer);
 
-    world.resources.insert(layers);
+    world.insert(layers);
+    for _ in 0..999 {
+        world.create_entity()
+        .with(make_line(linetype_id, layer_id))
+        .build();
+    }
     
-    world.insert(
-        (),
-        (0..999).map(|_| (make_line(linetype_id, layer_id), 0))
-    );
-    
-    if let Some(lays) = world.resources.get::<Layers>() {
+    if let Some(lays) = world.try_fetch::<Layers>() {
         for lay in lays.inner.iter() {
             println!("found layer {:?}.", lay);
         }
     };
 
-    if let Some(typs) = world.resources.get::<LineTypes>() {
+    if let Some(typs) = world.try_fetch::<LineTypes>() {
         for typ in typs.inner.iter() {
             println!("found linetype {:?}.", typ);
         }

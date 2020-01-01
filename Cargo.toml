@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7.2"
-legion = "0.2.1"
+specs = "0.15.1"
