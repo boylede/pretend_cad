@@ -8,6 +8,7 @@ edition = "2018"
 rand = "0.7.2"
 amethyst = "0.13.2"
 specs = "0.15.1"
+nalgebra = "0.18"
 
 [features]
 default = ["vulkan"]
