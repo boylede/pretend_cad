@@ -3,13 +3,9 @@ use amethyst::{
     prelude::*,
     renderer::{
         camera::Camera,
-        debug_drawing::{DebugLine, DebugLines, DebugLinesComponent, DebugLinesParams},
+        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
         plugins::{RenderDebugLines, RenderToWindow},
-        rendy::{
-            mesh::{Color as RendyColor, Position},
-            util::types::vertex::PosColor,
-        },
         types::DefaultBackend,
         RenderingBundle,
     },
@@ -75,7 +71,7 @@ impl<T> GenerationVec<T> {
             .inner
             .iter()
             .enumerate()
-            .find(|(i, (gen, e))| e.is_none())
+            .find(|(_i, (_gen, e))| e.is_none())
         {
             let new_gen = gen + 1;
             self.inner[index] = (new_gen, Some(item));
@@ -174,12 +170,12 @@ fn make_line(
 ) -> (Drawable, DebugLinesComponent) {
     let mut rng = rand::thread_rng();
     let a = Point {
-        x: rng.gen_range(0, 10) as f32,
-        y: rng.gen_range(0, 10) as f32,
+        x: rng.gen_range(0, 600) as f32,
+        y: rng.gen_range(0, 600) as f32,
     };
     let b = Point {
-        x: rng.gen_range(0, 10) as f32,
-        y: rng.gen_range(0, 10) as f32,
+        x: rng.gen_range(0, 600) as f32,
+        y: rng.gen_range(0, 600) as f32,
     };
     let c = FullColor {
         r: 234,
@@ -204,7 +200,12 @@ fn make_line(
 }
 
 fn main() {
-    run_app();
+    match run_app() {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Application quit with error: {:?}", e);
+        }
+    }
 }
 
 struct SomeState {
@@ -244,7 +245,7 @@ impl SimpleState for SomeState {
         let layer_id = layers.push(first_layer);
 
         data.world.insert(layers);
-        for _ in 0..999 {
+        for _ in 0..99 {
             let (a, b) = make_line(linetype_id, layer_id);
             data.world.create_entity().with(a).with(b).build();
         }
@@ -271,7 +272,7 @@ impl SimpleState for SomeState {
         let grid_h = self.domain_h as u16;
         let grid_w = self.domain_w as u16;
 
-        for y in (0..grid_h).step_by(50).map(f32::from) {
+        for y in (0..=grid_h).step_by(50).map(f32::from) {
             debug_lines_component.add_line(
                 [0.0, y, 1.0].into(),
                 [grid_w as f32, y, 1.0].into(),
@@ -279,19 +280,13 @@ impl SimpleState for SomeState {
             );
         }
 
-        for x in (0..grid_w).step_by(50).map(f32::from) {
+        for x in (0..=grid_w).step_by(50).map(f32::from) {
             debug_lines_component.add_line(
                 [x, 0.0, 1.0].into(),
                 [x, grid_h as f32, 1.0].into(),
                 Srgba::new(0.3, 0.3, 0.3, 1.0),
             );
         }
-
-        debug_lines_component.add_line(
-            [20.0, 20.0, 1.0].into(),
-            [780.0, 580.0, 1.0].into(),
-            Srgba::new(1.0, 0.0, 0.2, 1.0), // Red
-        );
 
         data.world
             .create_entity()
@@ -315,6 +310,7 @@ impl SimpleState for SomeState {
     }
 }
 
+/*
 struct LineSyncSystem {}
 
 impl<'a> System<'a> for LineSyncSystem {
@@ -327,7 +323,7 @@ impl<'a> System<'a> for LineSyncSystem {
         unimplemented!()
     }
 }
-
+*/
 fn run_app() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
     let app_root = amethyst::utils::application_root_dir()?;
@@ -360,9 +356,9 @@ fn run_app() -> amethyst::Result<()> {
                 .with_plugin(RenderDebugLines::default()),
         )?;
     let initial_state = SomeState {
-        zoom_level: 0.5,
-        domain_w: 200.0,
-        domain_h: 200.0,
+        zoom_level: 1.0,
+        domain_w: 600.0,
+        domain_h: 600.0,
     };
 
     let mut game = Application::new(app_root, initial_state, game_data)?;
