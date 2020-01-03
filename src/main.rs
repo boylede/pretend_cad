@@ -1,26 +1,22 @@
-use specs::prelude::*;
-use rand::prelude::*;
 use amethyst::{
     core::transform::{Transform, TransformBundle},
     prelude::*,
-    window::{DisplayConfig, ScreenDimensions},
     renderer::{
-        RenderingBundle,
         camera::Camera,
-        types::DefaultBackend,
-        palette::Srgba,
         debug_drawing::{DebugLine, DebugLines, DebugLinesComponent, DebugLinesParams},
-        plugins::{
-            RenderDebugLines,
-            RenderToWindow
-        },
+        palette::Srgba,
+        plugins::{RenderDebugLines, RenderToWindow},
         rendy::{
             mesh::{Color as RendyColor, Position},
             util::types::vertex::PosColor,
-            
-        }
+        },
+        types::DefaultBackend,
+        RenderingBundle,
     },
+    window::{DisplayConfig, ScreenDimensions},
 };
+use rand::prelude::*;
+use specs::prelude::*;
 
 use nalgebra::geometry::Point as nPoint;
 
@@ -45,7 +41,7 @@ struct GenerationID<M> {
     _marker: std::marker::PhantomData<M>,
 }
 
-impl<M> Copy for GenerationID<M> { }
+impl<M> Copy for GenerationID<M> {}
 
 impl<M> Clone for GenerationID<M> {
     fn clone(&self) -> GenerationID<M> {
@@ -60,12 +56,10 @@ struct GenerationVec<T> {
 
 impl<T> GenerationVec<T> {
     fn new() -> Self {
-        GenerationVec {
-            inner: vec![],
-        }
+        GenerationVec { inner: vec![] }
     }
     fn get(&self, id: GenerationID<T>) -> Option<&T> {
-        let GenerationID{id, generation, ..} = id;
+        let GenerationID { id, generation, .. } = id;
         if let Some((gen, Some(item))) = self.inner.get(id) {
             if *gen == generation {
                 return Some(item);
@@ -77,12 +71,17 @@ impl<T> GenerationVec<T> {
         }
     }
     fn push(&mut self, item: T) -> GenerationID<T> {
-        if let Some((index, (gen, _))) = self.inner.iter().enumerate().find(|(i, (gen, e))| e.is_none()) {
+        if let Some((index, (gen, _))) = self
+            .inner
+            .iter()
+            .enumerate()
+            .find(|(i, (gen, e))| e.is_none())
+        {
             let new_gen = gen + 1;
             self.inner[index] = (new_gen, Some(item));
             GenerationID {
                 generation: new_gen,
-                id: index, 
+                id: index,
                 _marker: Default::default(),
             }
         } else {
@@ -94,7 +93,6 @@ impl<T> GenerationVec<T> {
                 _marker: Default::default(),
             }
         }
-
     }
     fn remove(&mut self, index: usize) -> Option<T> {
         if let Some((_gen, found)) = self.inner.get_mut(index) {
@@ -170,17 +168,24 @@ struct Group {
     inner: Vec<Drawable>,
 }
 
-fn make_line(style: GenerationID<LineType>, layer: GenerationID<Layer>) -> (Drawable, DebugLinesComponent) {
+fn make_line(
+    style: GenerationID<LineType>,
+    layer: GenerationID<Layer>,
+) -> (Drawable, DebugLinesComponent) {
     let mut rng = rand::thread_rng();
     let a = Point {
         x: rng.gen_range(0, 10) as f32,
-        y: rng.gen_range(0, 10) as f32
+        y: rng.gen_range(0, 10) as f32,
     };
     let b = Point {
         x: rng.gen_range(0, 10) as f32,
-        y: rng.gen_range(0, 10) as f32
+        y: rng.gen_range(0, 10) as f32,
     };
-    let c = FullColor{r: 234, g: 65, b: 212};
+    let c = FullColor {
+        r: 234,
+        g: 65,
+        b: 212,
+    };
     let line = Drawable::Line(Line {
         start: a,
         end: b,
@@ -193,12 +198,8 @@ fn make_line(style: GenerationID<LineType>, layer: GenerationID<Layer>) -> (Draw
     let mut debug_lines = DebugLinesComponent::new();
     let start: nPoint<f32, nalgebra::base::dimension::U3> = nPoint::from_slice(&[a.x, a.y, 0.0]);
     let end: nPoint<f32, nalgebra::base::dimension::U3> = nPoint::from_slice(&[b.x, b.y, 0.0]);
-    let color = Srgba::new(c.r as f32, c.g  as f32, c.b  as f32, 1.0);
-    debug_lines.add_line(
-        start,
-        end,
-        color,
-    );
+    let color = Srgba::new(c.r as f32, c.g as f32, c.b as f32, 1.0);
+    debug_lines.add_line(start, end, color);
     (line, debug_lines)
 }
 
@@ -214,14 +215,17 @@ struct SomeState {
 
 impl SimpleState for SomeState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-
         data.world.register::<Drawable>();
-        
+
         data.world.insert(DebugLines::new());
         data.world.insert(DebugLinesParams { line_width: 2.0 });
 
-        let continous_line = LineType {draw_line: line_type_continous};
-        let hidden_line = LineType {draw_line: line_type_hidden};
+        let continous_line = LineType {
+            draw_line: line_type_continous,
+        };
+        let hidden_line = LineType {
+            draw_line: line_type_hidden,
+        };
         let mut line_types = LineTypes::new();
         let linetype_id = line_types.push(continous_line);
         line_types.push(hidden_line);
@@ -230,7 +234,7 @@ impl SimpleState for SomeState {
 
         let first_layer = Layer {
             name: "Zero".to_string(),
-            color: Color::Full(FullColor{r: 0, g: 0, b: 0}),
+            color: Color::Full(FullColor { r: 0, g: 0, b: 0 }),
             line_type: linetype_id,
             hidden: false,
             frozen: false,
@@ -242,12 +246,9 @@ impl SimpleState for SomeState {
         data.world.insert(layers);
         for _ in 0..999 {
             let (a, b) = make_line(linetype_id, layer_id);
-            data.world.create_entity()
-            .with(a)
-            .with(b)
-            .build();
+            data.world.create_entity().with(a).with(b).build();
         }
-        
+
         if let Some(lays) = data.world.try_fetch::<Layers>() {
             for lay in lays.inner.iter() {
                 println!("found layer {:?}.", lay);
@@ -301,7 +302,10 @@ impl SimpleState for SomeState {
         local_transform.set_translation_xyz(self.domain_w / 2.0, self.domain_h / 2.0, 10.0);
         data.world
             .create_entity()
-            .with(Camera::standard_2d(screen_w / self.zoom_level, screen_h / self.zoom_level))
+            .with(Camera::standard_2d(
+                screen_w / self.zoom_level,
+                screen_h / self.zoom_level,
+            ))
             .with(local_transform)
             .build();
     }
@@ -324,16 +328,15 @@ impl<'a> System<'a> for LineSyncSystem {
     }
 }
 
-
-fn run_app() ->  amethyst::Result<()> {
+fn run_app() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
     let app_root = amethyst::utils::application_root_dir()?;
 
     let display_config = DisplayConfig {
         title: "Pretender".to_string(),
         fullscreen: None,
-        dimensions: Some((800,800)),
-        min_dimensions: Some((300,300)),
+        dimensions: Some((800, 800)),
+        min_dimensions: Some((300, 300)),
         max_dimensions: None,
         visibility: true,
         icon: None,
@@ -345,15 +348,14 @@ fn run_app() ->  amethyst::Result<()> {
         transparent: false,
         loaded_icon: None,
     };
-    
+
     let game_data = GameDataBuilder::default()
         // .with(ExampleLinesSystem::new(), "example_lines_system", &[])
         .with_bundle(TransformBundle::new())?
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
-                    RenderToWindow::from_config(display_config)
-                        .with_clear([0.0, 0.0, 0.0, 1.0]),
+                    RenderToWindow::from_config(display_config).with_clear([0.0, 0.0, 0.0, 1.0]),
                 )
                 .with_plugin(RenderDebugLines::default()),
         )?;
@@ -366,7 +368,6 @@ fn run_app() ->  amethyst::Result<()> {
     let mut game = Application::new(app_root, initial_state, game_data)?;
 
     game.run();
-
 
     Ok(())
 }
