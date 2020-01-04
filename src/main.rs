@@ -355,13 +355,21 @@ impl SimpleState for SomeState {
                                 use winit::MouseScrollDelta;
                                 match delta {
                                     MouseScrollDelta::LineDelta(_x, y) => {
-                                        self.zoom_level = self.zoom_level - (*y as f64 / 10.0);
+                                        self.zoom_level = if *y > 0.0 {
+                                            self.zoom_level / 1.1
+                                        } else {
+                                            self.zoom_level * 1.1
+                                        };
                                         // println!("got mousewheel linedelta of {}", y);
                                         self.reset_camera(w);
                                     }
                                     MouseScrollDelta::PixelDelta(lp) => {
-                                        // println!("got mousewheel pixeldelta {}", lp.y);
-                                        self.zoom_level = self.zoom_level - (lp.y / 10.0);
+                                        // todo: test this on hardware that triggers this code path?
+                                        self.zoom_level = if lp.y > 0.0 {
+                                            self.zoom_level * 1.1
+                                        } else {
+                                            self.zoom_level / 1.1
+                                        };
                                         self.reset_camera(w);
                                     }
                                 }
