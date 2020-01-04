@@ -2,10 +2,8 @@ use amethyst::{
     core::transform::{Transform, TransformBundle},
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
-    LoggerConfig,
-    StdoutLog,
     renderer::{
-        camera::{Camera, Projection, Orthographic},
+        camera::{Camera, Orthographic, Projection},
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
         plugins::{RenderDebugLines, RenderToWindow},
@@ -13,13 +11,11 @@ use amethyst::{
         RenderingBundle,
     },
     window::{DisplayConfig, ScreenDimensions},
+    LoggerConfig, StdoutLog,
 };
 use rand::prelude::*;
 use specs::prelude::*;
-use winit::{
-    WindowEvent,
-};
-
+use winit::WindowEvent;
 
 use nalgebra::geometry::Point as nPoint;
 
@@ -238,11 +234,11 @@ fn move_camera(w: &mut World, dx: f64, dy: f64) {
                     // o.set_bottom_and_top(bottom, top);
                     // o.set_left_and_right(left, right);
                 }
-                _ => {
-                    unimplemented!()
-                }
+                _ => unimplemented!(),
             }
-            cam.set_projection(Projection::Orthographic(Orthographic::new(left, right, bottom, top, 10.0, -10.0)));
+            cam.set_projection(Projection::Orthographic(Orthographic::new(
+                left, right, bottom, top, 10.0, -10.0,
+            )));
         }
     });
 }
@@ -269,8 +265,8 @@ impl SimpleState for PanState {
                             WindowEvent::Resized(_size) => {
                                 // shouldnt be possible?
                             }
-                            WindowEvent::CursorMoved{position, ..} => {
-                                let (x,y) = (position.x, position.y);
+                            WindowEvent::CursorMoved { position, .. } => {
+                                let (x, y) = (position.x, position.y);
 
                                 let dx = x - self.last.0;
                                 let dy = y - self.last.1;
@@ -282,9 +278,9 @@ impl SimpleState for PanState {
                             WindowEvent::MouseWheel { .. } => {
                                 // unexpected
                             }
-                            WindowEvent::MouseInput{state, button, ..} => {
-                                use winit::MouseButton::*;
+                            WindowEvent::MouseInput { state, button, .. } => {
                                 use winit::ElementState::*;
+                                use winit::MouseButton::*;
                                 match (button, state) {
                                     (Middle, Released) => {
                                         return Trans::Pop;
@@ -305,8 +301,7 @@ impl SimpleState for PanState {
             StateEvent::Ui(_event) => {
                 //uievent
             }
-            StateEvent::Input(_event) => {
-            }
+            StateEvent::Input(_event) => {}
         }
         Trans::None
     }
@@ -431,8 +426,8 @@ impl SimpleState for SomeState {
     }
 
     // fn update(&mut self, _: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        // note: needs to call data.data.update(&mut data.world)
-        //     Trans::None
+    // note: needs to call data.data.update(&mut data.world)
+    //     Trans::None
     // }
     fn handle_event(
         &mut self,
@@ -455,7 +450,7 @@ impl SimpleState for SomeState {
                                 self.domain_h = *height;
                                 self.reset_camera(w);
                             }
-                            WindowEvent::CursorMoved{position, ..} => {
+                            WindowEvent::CursorMoved { position, .. } => {
                                 self.cursor.0 = position.x;
                                 self.cursor.1 = position.y;
                             }
@@ -482,16 +477,15 @@ impl SimpleState for SomeState {
                                     }
                                 }
                             }
-                            WindowEvent::MouseInput{state, button, ..} => {
-                                use winit::MouseButton::*;
+                            WindowEvent::MouseInput { state, button, .. } => {
                                 use winit::ElementState::*;
+                                use winit::MouseButton::*;
                                 match (button, state) {
                                     (Middle, Pressed) => {
                                         // w.exec(|position: WriteStorage<Camera>| {});
                                         let pan_state = PanState {
                                             initial: self.cursor,
                                             last: self.cursor,
-
                                         };
                                         return Trans::Push(Box::new(pan_state));
                                     }
@@ -560,11 +554,11 @@ impl<'a> System<'a> for LineSyncSystem {
 */
 fn run_app() -> amethyst::Result<()> {
     let app_root = amethyst::utils::application_root_dir()?;
-    let mut logger : LoggerConfig= Default::default();
+    let mut logger: LoggerConfig = Default::default();
     logger.log_file = Some(app_root.join("log.txt"));
     logger.stdout = StdoutLog::Off;
     amethyst::start_logger(logger);
-    
+
     let assets_path = app_root.join("assets/");
 
     let display_config = DisplayConfig {
@@ -598,7 +592,7 @@ fn run_app() -> amethyst::Result<()> {
         zoom_level: 1.0,
         domain_w: 600.0,
         domain_h: 600.0,
-        cursor: (0.0,0.0),
+        cursor: (0.0, 0.0),
     };
 
     let mut game = Application::new(app_root, initial_state, game_data)?;
