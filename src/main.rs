@@ -5,7 +5,7 @@ use amethyst::{
     LoggerConfig,
     StdoutLog,
     renderer::{
-        camera::{Camera, Projection},
+        camera::{Camera, Projection, Orthographic},
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
         plugins::{RenderDebugLines, RenderToWindow},
@@ -219,8 +219,35 @@ fn main() {
 }
 
 struct PanState {
-    initial_screen_pos: (f64, f64),
-    drag_pos: (f64, f64),
+    initial: (f64, f64),
+    last: (f64, f64),
+}
+
+fn move_camera(w: &mut World, dx: f64, dy: f64) {
+    w.exec(|mut cameras: WriteStorage<Camera>| {
+        for cam in (&mut cameras).join() {
+            let p = cam.projection();
+            let left;
+            let right;
+            let top;
+            let bottom;
+            match p {
+                Projection::Orthographic(o) => {
+                    // println!("moving camera {},{}", dx, dy);
+                    left = o.left() - dx as f32;
+                    right = o.right() - dx as f32;
+                    top = o.top() - dy as f32;
+                    bottom = o.bottom() - dy as f32;
+                    // o.set_bottom_and_top(bottom, top);
+                    // o.set_left_and_right(left, right);
+                }
+                _ => {
+                    unimplemented!()
+                }
+            }
+            cam.set_projection(Projection::Orthographic(Orthographic::new(left, right, bottom, top, 10.0, -10.0)));
+        }
+    });
 }
 
 impl SimpleState for PanState {
@@ -245,15 +272,25 @@ impl SimpleState for PanState {
                             WindowEvent::Resized(size) => {
                                 // shouldnt be possible?
                             }
+                            WindowEvent::CursorMoved{position, ..} => {
+                                let (x,y) = (position.x, position.y);
+
+                                let dx = x - self.last.0;
+                                let dy = y - self.last.1;
+                                // println!("dragged to {},{}", dx, dy);
+                                self.last.0 = x;
+                                self.last.1 = y;
+                                move_camera(w, dx, dy);
+                            }
                             WindowEvent::MouseWheel { delta, .. } => {
                                 // unexpected
                             }
                             WindowEvent::MouseInput{state, button, ..} => {
-                                use winit::MouseButton;
-                                use winit::ElementState;
+                                use winit::MouseButton::*;
+                                use winit::ElementState::*;
                                 match (button, state) {
-                                    (MouseButton::Middle, ElementState::Pressed) => {
-                                        //
+                                    (Middle, Released) => {
+                                        return Trans::Pop;
                                     }
                                     _ => {}
                                 }
@@ -282,6 +319,7 @@ struct SomeState {
     zoom_level: f64,
     domain_h: f64,
     domain_w: f64,
+    cursor: (f64, f64),
 }
 
 impl SomeState {
@@ -420,6 +458,10 @@ impl SimpleState for SomeState {
                                 self.domain_h = *height;
                                 self.reset_camera(w);
                             }
+                            WindowEvent::CursorMoved{position, ..} => {
+                                self.cursor.0 = position.x;
+                                self.cursor.1 = position.y;
+                            }
                             WindowEvent::MouseWheel { delta, .. } => {
                                 use winit::MouseScrollDelta;
                                 match delta {
@@ -441,6 +483,22 @@ impl SimpleState for SomeState {
                                         };
                                         self.reset_camera(w);
                                     }
+                                }
+                            }
+                            WindowEvent::MouseInput{state, button, ..} => {
+                                use winit::MouseButton::*;
+                                use winit::ElementState::*;
+                                match (button, state) {
+                                    (Middle, Pressed) => {
+                                        w.exec(|mut position: WriteStorage<Camera>| {});
+                                        let pan_state = PanState {
+                                            initial: self.cursor,
+                                            last: self.cursor,
+
+                                        };
+                                        return Trans::Push(Box::new(pan_state));
+                                    }
+                                    _ => {}
                                 }
                             }
                             _ => {
@@ -543,6 +601,7 @@ fn run_app() -> amethyst::Result<()> {
         zoom_level: 1.0,
         domain_w: 600.0,
         domain_h: 600.0,
+        cursor: (0.0,0.0),
     };
 
     let mut game = Application::new(app_root, initial_state, game_data)?;
