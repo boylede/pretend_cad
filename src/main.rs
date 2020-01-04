@@ -1,6 +1,6 @@
 use amethyst::{
     core::transform::{Transform, TransformBundle},
-    input::{get_key, is_close_requested, is_key_down, Button, InputBundle, VirtualKeyCode},
+    input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     LoggerConfig,
     StdoutLog,
@@ -17,12 +17,9 @@ use amethyst::{
 use rand::prelude::*;
 use specs::prelude::*;
 use winit::{
-    Event,
-    Icon,
-    WindowBuilder,
     WindowEvent,
 };
-use std::path::Path;
+
 
 use nalgebra::geometry::Point as nPoint;
 
@@ -251,7 +248,7 @@ fn move_camera(w: &mut World, dx: f64, dy: f64) {
 }
 
 impl SimpleState for PanState {
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+    fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         //
     }
     fn handle_event(
@@ -269,7 +266,7 @@ impl SimpleState for PanState {
                 match event {
                     winit::Event::WindowEvent { event, .. } => {
                         match event {
-                            WindowEvent::Resized(size) => {
+                            WindowEvent::Resized(_size) => {
                                 // shouldnt be possible?
                             }
                             WindowEvent::CursorMoved{position, ..} => {
@@ -282,7 +279,7 @@ impl SimpleState for PanState {
                                 self.last.1 = y;
                                 move_camera(w, dx, dy);
                             }
-                            WindowEvent::MouseWheel { delta, .. } => {
+                            WindowEvent::MouseWheel { .. } => {
                                 // unexpected
                             }
                             WindowEvent::MouseInput{state, button, ..} => {
@@ -305,10 +302,10 @@ impl SimpleState for PanState {
                     }
                 }
             }
-            StateEvent::Ui(event) => {
+            StateEvent::Ui(_event) => {
                 //uievent
             }
-            StateEvent::Input(event) => {
+            StateEvent::Input(_event) => {
             }
         }
         Trans::None
@@ -490,7 +487,7 @@ impl SimpleState for SomeState {
                                 use winit::ElementState::*;
                                 match (button, state) {
                                     (Middle, Pressed) => {
-                                        w.exec(|mut position: WriteStorage<Camera>| {});
+                                        // w.exec(|position: WriteStorage<Camera>| {});
                                         let pan_state = PanState {
                                             initial: self.cursor,
                                             last: self.cursor,
@@ -511,7 +508,7 @@ impl SimpleState for SomeState {
                     }
                 }
             }
-            StateEvent::Ui(event) => {
+            StateEvent::Ui(_event) => {
                 //uievent
                 println!("found input event of type StateEvent::Ui(e)");
             }
