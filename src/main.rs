@@ -1,6 +1,6 @@
 use amethyst::{
     core::transform::{Transform, TransformBundle},
-    input::{get_key, is_close_requested, is_key_down, InputBundle, VirtualKeyCode},
+    input::{get_key, is_close_requested, is_key_down, Button, InputBundle, VirtualKeyCode},
     prelude::*,
     renderer::{
         camera::{Camera, Projection},
@@ -216,6 +216,22 @@ struct SomeState {
     domain_w: f64,
 }
 
+impl SomeState {
+    fn reset_camera(&mut self, w: &mut World) {
+        w.exec(|mut cameras: WriteStorage<Camera>| {
+            for cam in (&mut cameras).join() {
+                let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
+                let right = left + (self.domain_w * self.zoom_level) as f32;
+                let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
+                let bottom = top - (self.domain_h * self.zoom_level) as f32;
+                let new_cam: Projection =
+                    Projection::orthographic(left, right, bottom, top, 10.0, -10.0).into();
+                cam.set_projection(new_cam);
+            }
+        });
+    }
+}
+
 impl SimpleState for SomeState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         data.world.register::<Drawable>();
@@ -320,93 +336,77 @@ impl SimpleState for SomeState {
         ev: StateEvent,
     ) -> SimpleTrans {
         let w = data.world;
-        if let StateEvent::Window(event) = &ev {
-            if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
-                return Trans::Quit;
-            }
-
-            if let winit::Event::WindowEvent {
-                event,
-                window_id: _,
-            } = event
-            {
-                if let WindowEvent::Resized(size) = event {
-                    // type SystemData = (WriteStorage<'a, Camera>, Write<'a, WorldState>);
-                    w.exec(|mut cameras: WriteStorage<Camera>| {
-                        self.domain_w = size.width;
-                        self.domain_h = size.height;
-                        for mut cam in (&mut cameras).join() {
-                            // todo: change proj inplace - why do we need to heap allocate for this?
-                            // let new_cam : Camera = Projection::perspective(
-                            //     (state.screen_w / state.screen_h) as f32,
-                            //     std::f32::consts::FRAC_PI_3,
-                            // ).into();
-
-                            let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
-                            let right = left + (self.domain_w * self.zoom_level) as f32;
-                            let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
-                            let bottom = top - (self.domain_h * self.zoom_level) as f32;
-                            let new_cam: Projection =
-                                Projection::orthographic(left, right, bottom, top, 10.0, -10.0)
-                                    .into();
-                            cam.set_projection(new_cam);
-                        }
-                    });
+        match &ev {
+            StateEvent::Window(event) => {
+                if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                    return Trans::Quit;
                 }
-                // else
-                // if let WindowEvent::CursorMoved{position, ..} = event {
 
-                //     w.exec(|mut state: WriteExpect<'_, SomeState>| {
-                //         let mouse_pos: (f64, f64) = (position.x / state.domain_w, position.y / state.domain_h);
-                //         state.player_input.aim = mouse_pos;
-
-                //     });
-                // } else
-                // if let WindowEvent::MouseInput{button, state: m_state, ..} = event {
-                //     match button {
-                //         MouseButton::Left => w.exec(|mut state: Write<'_, SomeState>| {
-                //             state.player_input.mouse_left = *m_state == ElementState::Pressed;
-                //         }),
-                //         _ => (),
-                //     }
-                // }
+                match event {
+                    winit::Event::WindowEvent { event, .. } => {
+                        match event {
+                            WindowEvent::Resized(size) => {
+                                let winit::dpi::LogicalSize { width, height } = size;
+                                self.domain_w = *width;
+                                self.domain_h = *height;
+                                self.reset_camera(w);
+                            }
+                            WindowEvent::MouseWheel { delta, .. } => {
+                                use winit::MouseScrollDelta;
+                                match delta {
+                                    MouseScrollDelta::LineDelta(_x, y) => {
+                                        self.zoom_level = self.zoom_level - (*y as f64 / 10.0);
+                                        // println!("got mousewheel linedelta of {}", y);
+                                        self.reset_camera(w);
+                                    }
+                                    MouseScrollDelta::PixelDelta(lp) => {
+                                        // println!("got mousewheel pixeldelta {}", lp.y);
+                                        self.zoom_level = self.zoom_level - (lp.y / 10.0);
+                                        self.reset_camera(w);
+                                    }
+                                }
+                            }
+                            _ => {
+                                //
+                            }
+                        }
+                    }
+                    _ => {
+                        //
+                    }
+                }
             }
-
-            // match get_key(&event) {
-            //     Some((VirtualKeyCode::A, key_status)) => {
-            //         w.exec(|mut state: Write<'_, SomeState>| {
-            //             state.player_input.left = match key_status {
-            //                 ElementState::Pressed => true,
-            //                 ElementState::Released => false,
-            //             }
-            //         });
-            //     }
-            //     Some((VirtualKeyCode::D, key_status)) => {
-            //         w.exec(|mut state: Write<'_, SomeState>| {
-            //             state.player_input.right = match key_status {
-            //                 ElementState::Pressed => true,
-            //                 ElementState::Released => false,
-            //             }
-            //         });
-            //     }
-            //     Some((VirtualKeyCode::W, key_status)) => {
-            //         w.exec(|mut state: Write<'_, WorldState>| {
-            //             state.player_input.forward = match key_status {
-            //                 ElementState::Pressed => true,
-            //                 ElementState::Released => false,
-            //             }
-            //         });
-            //     }
-            //     Some((VirtualKeyCode::S, key_status)) => {
-            //         w.exec(|mut state: Write<'_, WorldState>| {
-            //             state.player_input.back = match key_status {
-            //                 ElementState::Pressed => true,
-            //                 ElementState::Released => false,
-            //             }
-            //         });
-            //     }
-            //     _ => (),
-            // }
+            StateEvent::Ui(event) => {
+                //uievent
+                println!("found input event of type StateEvent::Ui(e)");
+            }
+            StateEvent::Input(event) => {
+                println!("found input event of type StateEvent::Input(e)");
+                use amethyst::input::InputEvent;
+                use amethyst::input::ScrollDirection;
+                match event {
+                    InputEvent::MouseWheelMoved(direction) => {
+                        match direction {
+                            ScrollDirection::ScrollUp => {
+                                println!("scroll moved");
+                                self.zoom_level = self.zoom_level * 1.1;
+                                self.reset_camera(w);
+                            }
+                            ScrollDirection::ScrollDown => {
+                                println!("scroll moved");
+                                self.zoom_level = self.zoom_level / 1.1;
+                                self.reset_camera(w);
+                            }
+                            _ => {
+                                //
+                            }
+                        }
+                    }
+                    _ => {
+                        //
+                    }
+                }
+            }
         }
         Trans::None
     }
