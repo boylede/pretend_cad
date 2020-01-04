@@ -14,7 +14,13 @@ use amethyst::{
 };
 use rand::prelude::*;
 use specs::prelude::*;
-use winit::WindowEvent;
+use winit::{
+    Event,
+    Icon,
+    WindowBuilder,
+    WindowEvent,
+};
+use std::path::Path;
 
 use nalgebra::geometry::Point as nPoint;
 
@@ -210,6 +216,66 @@ fn main() {
     }
 }
 
+struct PanState {
+    initial_screen_pos: (f64, f64),
+    drag_pos: (f64, f64),
+}
+
+impl SimpleState for PanState {
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+        //
+    }
+    fn handle_event(
+        &mut self,
+        data: StateData<'_, GameData<'_, '_>>,
+        ev: StateEvent,
+    ) -> SimpleTrans {
+        let w = data.world;
+        match &ev {
+            StateEvent::Window(event) => {
+                if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                    return Trans::Quit;
+                }
+
+                match event {
+                    winit::Event::WindowEvent { event, .. } => {
+                        match event {
+                            WindowEvent::Resized(size) => {
+                                // shouldnt be possible?
+                            }
+                            WindowEvent::MouseWheel { delta, .. } => {
+                                // unexpected
+                            }
+                            WindowEvent::MouseInput{state, button, ..} => {
+                                use winit::MouseButton;
+                                use winit::ElementState;
+                                match (button, state) {
+                                    (MouseButton::Middle, ElementState::Pressed) => {
+                                        //
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            _ => {
+                                //
+                            }
+                        }
+                    }
+                    _ => {
+                        //
+                    }
+                }
+            }
+            StateEvent::Ui(event) => {
+                //uievent
+            }
+            StateEvent::Input(event) => {
+            }
+        }
+        Trans::None
+    }
+}
+
 struct SomeState {
     zoom_level: f64,
     domain_h: f64,
@@ -327,9 +393,10 @@ impl SimpleState for SomeState {
             .build();
     }
 
-    fn update(&mut self, _: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        Trans::None
-    }
+    // fn update(&mut self, _: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        // note: needs to call data.data.update(&mut data.world)
+        //     Trans::None
+    // }
     fn handle_event(
         &mut self,
         data: StateData<'_, GameData<'_, '_>>,
