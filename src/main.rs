@@ -2,6 +2,8 @@ use amethyst::{
     core::transform::{Transform, TransformBundle},
     input::{get_key, is_close_requested, is_key_down, Button, InputBundle, VirtualKeyCode},
     prelude::*,
+    LoggerConfig,
+    StdoutLog,
     renderer::{
         camera::{Camera, Projection},
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
@@ -502,8 +504,12 @@ impl<'a> System<'a> for LineSyncSystem {
 }
 */
 fn run_app() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
     let app_root = amethyst::utils::application_root_dir()?;
+    let mut logger : LoggerConfig= Default::default();
+    logger.log_file = Some(app_root.join("log.txt"));
+    logger.stdout = StdoutLog::Off;
+    amethyst::start_logger(logger);
+    
     let assets_path = app_root.join("assets/");
 
     let display_config = DisplayConfig {
