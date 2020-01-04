@@ -437,6 +437,7 @@ impl<'a> System<'a> for LineSyncSystem {
 fn run_app() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
     let app_root = amethyst::utils::application_root_dir()?;
+    let assets_path = app_root.join("assets/");
 
     let display_config = DisplayConfig {
         title: "Pretender".to_string(),
@@ -445,7 +446,7 @@ fn run_app() -> amethyst::Result<()> {
         min_dimensions: Some((300, 300)),
         max_dimensions: None,
         visibility: true,
-        icon: None,
+        icon: Some(assets_path.join("icon.png")),
         always_on_top: false,
         decorations: true,
         maximized: false,
