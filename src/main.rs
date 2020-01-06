@@ -15,6 +15,7 @@ mod components;
 mod resources;
 mod states;
 mod systems;
+mod commands;
 
 fn main() {
     match run_app() {

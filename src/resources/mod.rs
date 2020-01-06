@@ -1,6 +1,7 @@
-use crate::common::GenerationID;
-use crate::common::GenerationVec;
+use crate::common::{ GenerationID, GenerationVec};
 use crate::components::Color;
+use std::collections::HashMap;
+use amethyst::prelude::*;
 
 pub type Layers = GenerationVec<Layer>;
 
@@ -29,3 +30,36 @@ impl LineType {
         (position * scale) as i32 % 2 == 0
     }
 }
+
+
+pub struct CommandList {
+    inner: HashMap<String, Command>,
+}
+
+impl CommandList {
+    pub fn new() -> Self {
+        CommandList {
+            inner: HashMap::new(),
+        }
+    }
+    pub fn add(&mut self, key: String, value: Command) {
+        self.inner.insert(key, value);
+    }
+    pub fn get(&self, key: &str) -> Option<&Command> {
+        self.inner.get(key)
+    }
+}
+
+pub type Command = Box<fn(&mut World) -> SimpleTrans>;
+
+// Box<dyn Command>
+// trait Command {
+//     fn run(&mut self, world: &mut World) -> SimpleTrans;
+// }
+
+// struct SimpleCommand {
+//     name: String,
+//     exec: Box<fn(&mut World) -> SimpleTrans>,
+
+
+// }

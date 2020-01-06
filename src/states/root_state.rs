@@ -14,9 +14,12 @@ use winit::WindowEvent;
 
 use crate::{
     components::{Color, Drawable, FullColor, Line},
-    resources::{Layer, Layers, LineType, LineTypes},
+    resources::{Layer, Layers, LineType, LineTypes, CommandList},
     states::{CommandEntryState, PanState},
+    commands,
 };
+
+use std::collections::HashMap;
 
 pub struct RootState {
     pub zoom_level: f64,
@@ -76,18 +79,8 @@ impl SimpleState for RootState {
             let (a, b) = Line::create(linetype_id, layer_id);
             data.world.create_entity().with(a).with(b).build();
         }
-
-        if let Some(lays) = data.world.try_fetch::<Layers>() {
-            for lay in lays.inner.iter() {
-                println!("found layer {:?}.", lay);
-            }
-        };
-
-        if let Some(typs) = data.world.try_fetch::<LineTypes>() {
-            for typ in typs.inner.iter() {
-                println!("found linetype {:?}.", typ);
-            }
-        };
+        let commands = commands::register_commands();
+        data.world.insert(commands);
 
         let mut debug_lines_component = DebugLinesComponent::new();
 

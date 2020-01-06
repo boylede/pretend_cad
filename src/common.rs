@@ -235,3 +235,15 @@ pub fn as_alphanumeric(key: VirtualKeyCode) -> Option<char> {
         Cut => None,
     }
 }
+
+pub fn is_confirmation(key: VirtualKeyCode) -> Option<bool> {
+    use VirtualKeyCode::*;
+    match key {
+        Escape => Some(false),
+        Return => Some(true),
+        Space => Some(true),
+        NumpadEnter => Some(true),
+        Tab => Some(true),
+        _ => None,
+    }
+}
