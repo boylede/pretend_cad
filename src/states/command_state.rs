@@ -37,34 +37,40 @@ impl SimpleState for CommandEntryState {
             let font_store = world.read_resource::<AssetStorage<FontAsset>>();
             get_default_font(&loader, &font_store)
         };
-        self.command_ui = Some(
-            world
-                .create_entity()
-                .with(UiText::new(
-                    font,
-                    "command:> ".to_string(),
-                    [0.5, 0.5, 0.5, 1.0],
-                    10.0,
-                ))
-                .with(TextEditing::new(
-                    100,
-                    [1.0, 1.0, 1.0, 1.0],
-                    [1.0, 0.5, 0.5, 1.0],
-                    false,
-                ))
-                .with(UiTransform::new(
-                    "".to_string(),
-                    Anchor::BottomMiddle,
-                    Anchor::BottomMiddle,
-                    // Stretch::NoStretch,
-                    0.0,
-                    0.0,
-                    0.0,
-                    100.0,
-                    10.0,
-                ))
-                .build(),
-        );
+        let command_entity = world
+        .create_entity()
+        .with(UiText::new(
+            font,
+            "command:> ".to_string(),
+            [0.5, 0.5, 0.5, 1.0],
+            20.0,
+        ))
+        .with(TextEditing::new(
+            100,
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 0.5, 1.0],
+            false,
+        ))
+        .with(UiTransform::new(
+            "".to_string(),
+            Anchor::BottomMiddle,
+            Anchor::BottomMiddle,
+            // Stretch::NoStretch,
+            0.0,
+            0.0,
+            0.0,
+            400.0,
+            40.0,
+        ))
+        .build();
+        self.command_ui = Some(command_entity);
+        
+        world.exec(|mut ui_text: WriteStorage<UiText>| {
+            //UiText
+            let text = ui_text.get_mut(command_entity).expect("failed to find UiText");
+            text.text.push_str(&self.command);
+        });
+        
     }
     fn on_stop(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         if let Some(command_ui) = self.command_ui {
@@ -95,12 +101,19 @@ impl SimpleState for CommandEntryState {
                                             Pressed => {
                                                 self.command.write_char(letter);
                                                 // println!("command is {}", self.command);
+                                                if let Some(ui) = self.command_ui {
+                                                    w.exec(|mut ui_text: WriteStorage<UiText>| {
+                                                        //UiText
+                                                        let text = ui_text.get_mut(ui).expect("failed to find UiText");
+                                                        text.text.push(letter);
+                                                    });
+                                                }
                                             }
                                             Released => (),
                                         }
                                     }
                                     if let Some(activate) = is_confirmation(key) {
-                                        println!("command: {}", self.command);
+                                        // println!("command: {}", self.command);
                                         use winit::ElementState::*;
                                         match state {
                                             Pressed => {
