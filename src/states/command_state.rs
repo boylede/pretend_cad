@@ -21,7 +21,7 @@ pub struct CommandEntryState {
 impl SimpleState for CommandEntryState {
     fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         //
-        println!("started entering command with {}", self.command);
+        // println!("started entering command with {}", self.command);
     }
     fn handle_event(
         &mut self,
@@ -31,7 +31,7 @@ impl SimpleState for CommandEntryState {
         let w = data.world;
         match &ev {
             StateEvent::Window(event) => {
-                if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                if is_close_requested(&event) {
                     return Trans::Quit;
                 }
                 match event {
@@ -52,16 +52,14 @@ impl SimpleState for CommandEntryState {
                                         }
                                     }
                                     if let Some(activate) = is_confirmation(key) {
-                                        println!("finished command: {}", self.command);
+                                        println!("command: {}", self.command);
                                         use winit::ElementState::*;
                                         match state {
                                             Pressed => {
                                                 if activate {
-                                                    // todo: put command on queue?
-
                                                     return interpret_command(w, &self.command);
                                                 } else {
-                                                    println!("cancelled command");
+                                                    // println!("cancelled command");
                                                     return Trans::Pop;
                                                 }
                                             },

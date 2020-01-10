@@ -75,10 +75,10 @@ impl SimpleState for RootState {
         let layer_id = layers.push(first_layer);
 
         data.world.insert(layers);
-        for _ in 0..99 {
-            let (a, b) = Line::create(linetype_id, layer_id);
-            data.world.create_entity().with(a).with(b).build();
-        }
+        // for _ in 0..99 {
+        //     let (a, b) = Line::create(linetype_id, layer_id);
+        //     data.world.create_entity().with(a).with(b).build();
+        // }
         let commands = commands::register_commands();
         data.world.insert(commands);
 

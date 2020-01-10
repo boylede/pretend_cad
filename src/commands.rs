@@ -11,7 +11,7 @@ use amethyst::{
 };
 
 use crate::{
-    components::{Color, Drawable, FullColor, Line},
+    components::{Color, Drawable, FullColor, Line, Point},
     resources::{Layer, Layers, LineType, LineTypes, CommandList},
     states::{CommandEntryState, PanState},
 };
@@ -30,5 +30,38 @@ fn quit_command(w: &mut World) -> SimpleTrans {
 }
 
 fn line_command(w: &mut World) -> SimpleTrans {
-    unimplemented!()
+    use rand::prelude::*;
+    use nalgebra::geometry::Point as nPoint;
+    let mut rng = rand::thread_rng();
+    let a = Point {
+        x: rng.gen_range(0, 600) as f32,
+        y: rng.gen_range(0, 600) as f32,
+    };
+    let b = Point {
+        x: rng.gen_range(0, 600) as f32,
+        y: rng.gen_range(0, 600) as f32,
+    };
+    let c = FullColor {
+        r: 234,
+        g: 65,
+        b: 212,
+    };
+    // let line = Drawable::Line(Line {
+    //     start: a,
+    //     end: b,
+    //     layer: layer,
+    //     color: Color::Full(c),
+    //     scale: 1.0,
+    //     linetype: style,
+    //     weight: 1.0,
+    // });
+    let mut debug_lines = DebugLinesComponent::new();
+    let start: nPoint<f32, nalgebra::base::dimension::U3> =
+        nPoint::from_slice(&[a.x, a.y, 0.0]);
+    let end: nPoint<f32, nalgebra::base::dimension::U3> = nPoint::from_slice(&[b.x, b.y, 0.0]);
+    let color = Srgba::new(c.r as f32, c.g as f32, c.b as f32, 1.0);
+    debug_lines.add_line(start, end, color);
+
+    w.create_entity().with(debug_lines).build();
+    Trans::Pop
 }

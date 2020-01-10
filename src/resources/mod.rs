@@ -57,9 +57,14 @@ pub type Command = Box<fn(&mut World) -> SimpleTrans>;
 //     fn run(&mut self, world: &mut World) -> SimpleTrans;
 // }
 
-// struct SimpleCommand {
-//     name: String,
-//     exec: Box<fn(&mut World) -> SimpleTrans>,
 
 
-// }
+struct CommandBuilder {
+    name: String,
+    inputs: Vec<InputDesc>,
+    exec: Box<fn(&mut World) -> SimpleTrans>,
+}
+
+struct InputDesc{
+
+}
