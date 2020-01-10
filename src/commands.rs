@@ -12,7 +12,7 @@ use amethyst::{
 
 use crate::{
     components::{Color, Drawable, FullColor, Line, Point},
-    resources::{Layer, Layers, LineType, LineTypes, CommandList},
+    resources::{CommandList, Layer, Layers, LineType, LineTypes},
     states::{CommandEntryState, PanState},
 };
 
@@ -30,8 +30,8 @@ fn quit_command(w: &mut World) -> SimpleTrans {
 }
 
 fn line_command(w: &mut World) -> SimpleTrans {
-    use rand::prelude::*;
     use nalgebra::geometry::Point as nPoint;
+    use rand::prelude::*;
     let mut rng = rand::thread_rng();
     let a = Point {
         x: rng.gen_range(0, 600) as f32,
@@ -56,8 +56,7 @@ fn line_command(w: &mut World) -> SimpleTrans {
     //     weight: 1.0,
     // });
     let mut debug_lines = DebugLinesComponent::new();
-    let start: nPoint<f32, nalgebra::base::dimension::U3> =
-        nPoint::from_slice(&[a.x, a.y, 0.0]);
+    let start: nPoint<f32, nalgebra::base::dimension::U3> = nPoint::from_slice(&[a.x, a.y, 0.0]);
     let end: nPoint<f32, nalgebra::base::dimension::U3> = nPoint::from_slice(&[b.x, b.y, 0.0]);
     let color = Srgba::new(c.r as f32, c.g as f32, c.b as f32, 1.0);
     debug_lines.add_line(start, end, color);
