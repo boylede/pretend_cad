@@ -13,10 +13,10 @@ use specs::prelude::*;
 use winit::WindowEvent;
 
 use crate::{
-    components::{Color, Drawable, FullColor, Line},
-    resources::{Layer, Layers, LineType, LineTypes, CommandList},
-    states::{CommandEntryState, PanState},
     commands,
+    components::{Color, Drawable, FullColor, Line},
+    resources::{CommandList, Layer, Layers, LineType, LineTypes},
+    states::{CommandEntryState, PanState},
 };
 
 use std::collections::HashMap;
@@ -206,6 +206,7 @@ impl SimpleState for RootState {
                                             Pressed => {
                                                 let command_state = CommandEntryState {
                                                     command: letter.to_string(),
+                                                    command_ui: None,
                                                 };
                                                 return Trans::Push(Box::new(command_state));
                                             }
@@ -226,12 +227,13 @@ impl SimpleState for RootState {
                     }
                 }
             }
-            StateEvent::Ui(_event) => {
+            StateEvent::Ui(event) => {
                 //uievent
-                println!("found input event of type StateEvent::Ui(e)");
+
+                // println!("found input event of type StateEvent::Ui({:?})", event.event_type);
             }
             StateEvent::Input(event) => {
-                println!("found input event of type StateEvent::Input(e)");
+                // println!("found input event of type StateEvent::Input({:?})", event);
                 use amethyst::input::InputEvent;
                 use amethyst::input::ScrollDirection;
                 match event {

@@ -1,5 +1,10 @@
 use amethyst::{
+    assets::{
+        AssetPrefab, AssetStorage, Format, Handle, Loader, Prefab, PrefabData, PrefabLoaderSystem,
+        PrefabLoaderSystemDesc, Progress, ProgressCounter,
+    },
     core::transform::Transform,
+    ecs::prelude::*,
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{
@@ -7,21 +12,64 @@ use amethyst::{
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
     },
+    ui::{
+        get_default_font, Anchor, FontAsset, RenderUi, Stretch, TextEditing, UiBundle, UiCreator,
+        UiEvent, UiFinder, UiText, UiTransform,
+    },
     window::ScreenDimensions,
 };
-use winit::WindowEvent;
-use std::fmt::Write;
 
-use crate::resources::{CommandList, Command};
+use std::fmt::Write;
+use winit::WindowEvent;
+
+use crate::resources::{Command, CommandList};
 
 pub struct CommandEntryState {
     pub command: String,
+    pub command_ui: Option<Entity>,
 }
 
 impl SimpleState for CommandEntryState {
-    fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
-        //
-        // println!("started entering command with {}", self.command);
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+        let world = data.world;
+        let font = {
+            let loader = world.read_resource::<Loader>();
+            let font_store = world.read_resource::<AssetStorage<FontAsset>>();
+            get_default_font(&loader, &font_store)
+        };
+        self.command_ui = Some(
+            world
+                .create_entity()
+                .with(UiText::new(
+                    font,
+                    "command:> ".to_string(),
+                    [0.5, 0.5, 0.5, 1.0],
+                    10.0,
+                ))
+                .with(TextEditing::new(
+                    100,
+                    [1.0, 1.0, 1.0, 1.0],
+                    [1.0, 0.5, 0.5, 1.0],
+                    false,
+                ))
+                .with(UiTransform::new(
+                    "".to_string(),
+                    Anchor::BottomMiddle,
+                    Anchor::BottomMiddle,
+                    // Stretch::NoStretch,
+                    0.0,
+                    0.0,
+                    0.0,
+                    100.0,
+                    10.0,
+                ))
+                .build(),
+        );
+    }
+    fn on_stop(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+        if let Some(command_ui) = self.command_ui {
+            data.world.delete_entity(command_ui);
+        }
     }
     fn handle_event(
         &mut self,
@@ -47,7 +95,7 @@ impl SimpleState for CommandEntryState {
                                             Pressed => {
                                                 self.command.write_char(letter);
                                                 // println!("command is {}", self.command);
-                                            },
+                                            }
                                             Released => (),
                                         }
                                     }
@@ -62,17 +110,16 @@ impl SimpleState for CommandEntryState {
                                                     // println!("cancelled command");
                                                     return Trans::Pop;
                                                 }
-                                            },
+                                            }
                                             Released => (),
                                         }
-                                        
                                     }
                                 }
                             }
-                            _ => ()
+                            _ => (),
                         }
                     }
-                    _ => ()
+                    _ => (),
                 }
             }
             StateEvent::Ui(event) => (),
@@ -88,7 +135,7 @@ fn interpret_command(w: &mut World, name: &String) -> SimpleTrans {
         let commands = w.read_resource::<CommandList>();
         command = commands.get(name).cloned();
     }
-    
+
     if let Some(func) = command {
         return func(w);
     }

@@ -1,21 +1,23 @@
 use amethyst::{
     core::transform::TransformBundle,
+    input::{InputBundle, StringBindings},
     prelude::*,
     renderer::{
         plugins::{RenderDebugLines, RenderToWindow},
         types::DefaultBackend,
         RenderingBundle,
     },
+    ui::{RenderUi, UiBundle, UiCreator, UiEvent, UiFinder, UiText},
     window::DisplayConfig,
     LoggerConfig, StdoutLog,
 };
 
+mod commands;
 mod common;
 mod components;
 mod resources;
 mod states;
 mod systems;
-mod commands;
 
 fn main() {
     match run_app() {
@@ -55,11 +57,15 @@ fn run_app() -> amethyst::Result<()> {
     let game_data = GameDataBuilder::default()
         // .with(ExampleLinesSystem::new(), "example_lines_system", &[])
         .with_bundle(TransformBundle::new())?
+        .with_bundle(UiBundle::<StringBindings>::new())?
+        .with_bundle(InputBundle::<StringBindings>::new())?
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
-                    RenderToWindow::from_config(display_config).with_clear([0.0, 0.0, 0.0, 1.0]),
+                    RenderToWindow::from_config(display_config)
+                        .with_clear([0.0005, 0.0005, 0.0005, 1.0]),
                 )
+                .with_plugin(RenderUi::default())
                 .with_plugin(RenderDebugLines::default()),
         )?;
     let initial_state = states::RootState {
