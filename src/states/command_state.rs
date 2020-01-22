@@ -38,39 +38,40 @@ impl SimpleState for CommandEntryState {
             get_default_font(&loader, &font_store)
         };
         let command_entity = world
-        .create_entity()
-        .with(UiText::new(
-            font,
-            "command:> ".to_string(),
-            [0.5, 0.5, 0.5, 1.0],
-            20.0,
-        ))
-        .with(TextEditing::new(
-            100,
-            [1.0, 1.0, 1.0, 1.0],
-            [1.0, 0.5, 0.5, 1.0],
-            false,
-        ))
-        .with(UiTransform::new(
-            "".to_string(),
-            Anchor::BottomMiddle,
-            Anchor::BottomMiddle,
-            // Stretch::NoStretch,
-            0.0,
-            0.0,
-            0.0,
-            400.0,
-            40.0,
-        ))
-        .build();
+            .create_entity()
+            .with(UiText::new(
+                font,
+                "command:> ".to_string(),
+                [0.5, 0.5, 0.5, 1.0],
+                20.0,
+            ))
+            .with(TextEditing::new(
+                100,
+                [1.0, 1.0, 1.0, 1.0],
+                [1.0, 0.5, 0.5, 1.0],
+                false,
+            ))
+            .with(UiTransform::new(
+                "".to_string(),
+                Anchor::BottomMiddle,
+                Anchor::BottomMiddle,
+                // Stretch::NoStretch,
+                0.0,
+                0.0,
+                0.0,
+                400.0,
+                40.0,
+            ))
+            .build();
         self.command_ui = Some(command_entity);
-        
+
         world.exec(|mut ui_text: WriteStorage<UiText>| {
             //UiText
-            let text = ui_text.get_mut(command_entity).expect("failed to find UiText");
+            let text = ui_text
+                .get_mut(command_entity)
+                .expect("failed to find UiText");
             text.text.push_str(&self.command);
         });
-        
     }
     fn on_stop(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         if let Some(command_ui) = self.command_ui {
@@ -88,52 +89,88 @@ impl SimpleState for CommandEntryState {
                 if is_close_requested(&event) {
                     return Trans::Quit;
                 }
-                match event {
-                    winit::Event::WindowEvent { event, .. } => {
-                        match event {
-                            WindowEvent::KeyboardInput { input, .. } => {
-                                let (keycode, state) = (input.virtual_keycode, input.state);
-                                if let Some(key) = keycode {
-                                    use crate::common::{as_alphanumeric, is_confirmation};
-                                    if let Some(letter) = as_alphanumeric(key) {
-                                        use winit::ElementState::*;
-                                        match state {
-                                            Pressed => {
-                                                self.command.write_char(letter);
-                                                // println!("command is {}", self.command);
-                                                if let Some(ui) = self.command_ui {
-                                                    w.exec(|mut ui_text: WriteStorage<UiText>| {
-                                                        //UiText
-                                                        let text = ui_text.get_mut(ui).expect("failed to find UiText");
-                                                        text.text.push(letter);
-                                                    });
-                                                }
-                                            }
-                                            Released => (),
-                                        }
-                                    }
-                                    if let Some(activate) = is_confirmation(key) {
-                                        // println!("command: {}", self.command);
-                                        use winit::ElementState::*;
-                                        match state {
-                                            Pressed => {
-                                                if activate {
-                                                    return interpret_command(w, &self.command);
-                                                } else {
-                                                    // println!("cancelled command");
-                                                    return Trans::Pop;
-                                                }
-                                            }
-                                            Released => (),
-                                        }
-                                    }
-                                }
-                            }
-                            _ => (),
+                if let winit::Event::WindowEvent {
+                    event:
+                        WindowEvent::KeyboardInput {
+                            input:
+                                winit::KeyboardInput {
+                                    virtual_keycode: Some(key),
+                                    state: winit::ElementState::Pressed,
+                                    ..
+                                },
+                            ..
+                        },
+                    ..
+                } = event
+                {
+                    use crate::common::{as_alphanumeric, is_confirmation};
+                    if let Some(letter) = as_alphanumeric(*key) {
+                        self.command.write_char(letter);
+                        if let Some(ui) = self.command_ui {
+                            w.exec(|mut ui_text: WriteStorage<UiText>| {
+                                let text = ui_text.get_mut(ui).expect("failed to find UiText");
+                                text.text.push(letter);
+                            });
                         }
                     }
-                    _ => (),
+                    if let Some(activate) = is_confirmation(*key) {
+                        // println!("command: {}", self.command);
+                        use winit::ElementState::*;    
+                        if activate {
+                            return interpret_command(w, &self.command);
+                        } else {
+                            return Trans::Pop;
+                        }
+                    }
                 }
+                // match event {
+                //     winit::Event::WindowEvent { event, .. } => {
+                //         match event {
+                //             WindowEvent::KeyboardInput { input, .. } => {
+                //                 let (keycode, state) = (input.virtual_keycode, input.state);
+                //                 if let Some(key) = keycode {
+                //                     use crate::common::{as_alphanumeric, is_confirmation};
+                //                     if let Some(letter) = as_alphanumeric(key) {
+                //                         use winit::ElementState::*;
+                //                         match state {
+                //                             Pressed => {
+                //                                 self.command.write_char(letter);
+                //                                 // println!("command is {}", self.command);
+                //                                 if let Some(ui) = self.command_ui {
+                //                                     w.exec(|mut ui_text: WriteStorage<UiText>| {
+                //                                         //UiText
+                //                                         let text = ui_text
+                //                                             .get_mut(ui)
+                //                                             .expect("failed to find UiText");
+                //                                         text.text.push(letter);
+                //                                     });
+                //                                 }
+                //                             }
+                //                             Released => (),
+                //                         }
+                //                     }
+                //                     if let Some(activate) = is_confirmation(key) {
+                //                         // println!("command: {}", self.command);
+                //                         use winit::ElementState::*;
+                //                         match state {
+                //                             Pressed => {
+                //                                 if activate {
+                //                                     return interpret_command(w, &self.command);
+                //                                 } else {
+                //                                     // println!("cancelled command");
+                //                                     return Trans::Pop;
+                //                                 }
+                //                             }
+                //                             Released => (),
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //             _ => (),
+                //         }
+                //     }
+                //     _ => (),
+                // }
             }
             StateEvent::Ui(event) => (),
             StateEvent::Input(event) => (),
