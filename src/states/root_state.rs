@@ -53,6 +53,7 @@ impl RootState {
 impl SimpleState for RootState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         data.world.register::<Drawable>();
+        data.world.register::<ActiveCamera>();
 
         data.world.insert(DebugLines::new());
         data.world.insert(DebugLinesParams { line_width: 0.5 });
