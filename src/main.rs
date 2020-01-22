@@ -69,9 +69,11 @@ fn run_app() -> amethyst::Result<()> {
                 .with_plugin(RenderDebugLines::default()),
         )?;
     let initial_state = states::RootState {
-        zoom_level: 1.0,
-        domain_w: 600.0,
-        domain_h: 600.0,
+        // zoom_level: 1.0,
+        // origin_x: 0.0,
+        // origin_y: 0.0,
+        // domain_w: 600.0,
+        // domain_h: 600.0,
         cursor: (0.0, 0.0),
     };
 

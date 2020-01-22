@@ -14,30 +14,38 @@ use winit::WindowEvent;
 
 use crate::{
     commands,
-    components::{Color, Drawable, FullColor, Line},
-    resources::{CommandList, Layer, Layers, LineType, LineTypes},
+    components::{Color, Drawable, FullColor, Line, ActiveCamera},
+    resources::{CommandList, Layer, Layers, LineType, LineTypes, ViewInfo},
     states::{CommandEntryState, PanState},
 };
 
 use std::collections::HashMap;
 
 pub struct RootState {
-    pub zoom_level: f64,
-    pub domain_h: f64,
-    pub domain_w: f64,
+    // pub zoom_level: f64,
+    // pub origin_x: f64,
+    // pub origin_y: f64,
+    // pub domain_h: f64,
+    // pub domain_w: f64,
     pub cursor: (f64, f64),
 }
 
 impl RootState {
     fn reset_camera(&mut self, w: &mut World) {
-        w.exec(|mut cameras: WriteStorage<Camera>| {
+        w.exec(|(mut cameras, mut view_info): (WriteStorage<Camera>, WriteExpect<ViewInfo>)| {
             for cam in (&mut cameras).join() {
-                let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
-                let right = left + (self.domain_w * self.zoom_level) as f32;
-                let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
-                let bottom = top - (self.domain_h * self.zoom_level) as f32;
+                let half_width = view_info.domain_w / 2.0;
+                let half_height = view_info.domain_h / 2.0;
+                let left = view_info.origin_x - half_width;
+                // let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
+                let right = view_info.origin_x + half_width;
+                // let right = left + (self.domain_w * self.zoom_level) as f32;
+                let top = view_info.origin_y + half_height;
+                // let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
+                let bottom = view_info.origin_y - half_height;
+                // let bottom = top - (self.domain_h * self.zoom_level) as f32;
                 let new_cam: Projection =
-                    Projection::orthographic(left, right, bottom, top, 10.0, -10.0).into();
+                    Projection::orthographic(left as f32, right as f32, bottom as f32, top as f32, 10.0, -10.0).into();
                 cam.set_projection(new_cam);
             }
         });
@@ -50,6 +58,7 @@ impl SimpleState for RootState {
 
         data.world.insert(DebugLines::new());
         data.world.insert(DebugLinesParams { line_width: 0.5 });
+        data.world.insert(ViewInfo::default());
 
         let continous_line = LineType {
             draw_line: LineType::line_type_continous,
@@ -89,8 +98,10 @@ impl SimpleState for RootState {
             (screen_dimensions.width(), screen_dimensions.height())
         };
 
-        let grid_h = self.domain_h as u16;
-        let grid_w = self.domain_w as u16;
+        // let ()
+
+        let grid_h: u16 = 1000;
+        let grid_w: u16 = 1000;
 
         for y in (0..=grid_h).step_by(50).map(f32::from) {
             debug_lines_component.add_line(
@@ -115,18 +126,20 @@ impl SimpleState for RootState {
 
         let mut local_transform = Transform::default();
         local_transform.set_translation_xyz(
-            self.domain_w as f32 / 2.0,
-            self.domain_h as f32 / 2.0,
+            10.0 / 2.0,
+            10.0 / 2.0,
             10.0,
         );
         data.world
             .create_entity()
             .with(Camera::standard_2d(
-                screen_w / self.zoom_level as f32,
-                screen_h / self.zoom_level as f32,
+                1.0,
+                1.0,
             ))
             .with(local_transform)
+            .with(ActiveCamera)
             .build();
+        self.reset_camera(data.world);
     }
 
     // fn update(&mut self, _: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
@@ -150,8 +163,11 @@ impl SimpleState for RootState {
                         match event {
                             WindowEvent::Resized(size) => {
                                 let winit::dpi::LogicalSize { width, height } = size;
-                                self.domain_w = *width;
-                                self.domain_h = *height;
+                                {
+                                    let mut view_info = w.write_resource::<ViewInfo>();
+                                    view_info.domain_w = *width * view_info.zoom_level;
+                                    view_info.domain_h = *height * view_info.zoom_level;
+                                }
                                 self.reset_camera(w);
                             }
                             WindowEvent::CursorMoved { position, .. } => {
@@ -162,21 +178,34 @@ impl SimpleState for RootState {
                                 use winit::MouseScrollDelta;
                                 match delta {
                                     MouseScrollDelta::LineDelta(_x, y) => {
-                                        self.zoom_level = if *y > 0.0 {
-                                            self.zoom_level / 1.1
-                                        } else {
-                                            self.zoom_level * 1.1
-                                        };
+                                        {
+                                            let mut view_info = w.write_resource::<ViewInfo>();
+                                            if *y > 0.0 {
+                                                // println!("zooming in");
+                                                view_info.zoom_level = view_info.zoom_level / 1.1;
+                                                view_info.domain_h = view_info.domain_h / 1.1;
+                                                view_info.domain_w = view_info.domain_w / 1.1;
+                                            } else {
+                                                // println!("zooming out");
+                                                view_info.zoom_level = view_info.zoom_level * 1.1;
+                                                view_info.domain_h = view_info.domain_h * 1.1;
+                                                view_info.domain_w = view_info.domain_w * 1.1;
+                                            };
+                                        }
                                         // println!("got mousewheel linedelta of {}", y);
                                         self.reset_camera(w);
                                     }
                                     MouseScrollDelta::PixelDelta(lp) => {
+                                        println!("got mousewheel pixeldelta of {}", lp.y);
+                                        {
+                                            let mut view_info = w.write_resource::<ViewInfo>();
                                         // todo: test this on hardware that triggers this code path?
-                                        self.zoom_level = if lp.y > 0.0 {
-                                            self.zoom_level * 1.1
-                                        } else {
-                                            self.zoom_level / 1.1
-                                        };
+                                            view_info.zoom_level = if lp.y > 0.0 {
+                                                view_info.zoom_level * 1.1
+                                            } else {
+                                                view_info.zoom_level / 1.1
+                                            };
+                                        }
                                         self.reset_camera(w);
                                     }
                                 }
@@ -187,10 +216,7 @@ impl SimpleState for RootState {
                                 match (button, state) {
                                     (Middle, Pressed) => {
                                         // w.exec(|position: WriteStorage<Camera>| {});
-                                        let pan_state = PanState {
-                                            initial: self.cursor,
-                                            last: self.cursor,
-                                        };
+                                        let pan_state = PanState::new(self.cursor);
                                         return Trans::Push(Box::new(pan_state));
                                     }
                                     _ => {}
@@ -238,15 +264,22 @@ impl SimpleState for RootState {
                 use amethyst::input::ScrollDirection;
                 match event {
                     InputEvent::MouseWheelMoved(direction) => {
+                        
                         match direction {
                             ScrollDirection::ScrollUp => {
-                                println!("scroll moved");
-                                self.zoom_level = self.zoom_level * 1.1;
+                                // println!("scroll moved");
+                                {
+                                    let mut view_info = w.write_resource::<ViewInfo>();
+                                    view_info.zoom_level = view_info.zoom_level * 1.1;
+                                }
                                 self.reset_camera(w);
                             }
                             ScrollDirection::ScrollDown => {
-                                println!("scroll moved");
-                                self.zoom_level = self.zoom_level / 1.1;
+                                // println!("scroll moved");
+                                {
+                                    let mut view_info = w.write_resource::<ViewInfo>();
+                                    view_info.zoom_level = view_info.zoom_level / 1.1;
+                                }
                                 self.reset_camera(w);
                             }
                             _ => {

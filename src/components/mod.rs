@@ -9,6 +9,13 @@ use crate::common::GenerationID;
 use crate::resources::Layer;
 use crate::resources::LineType;
 
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct ActiveCamera;
+
+impl Component for ActiveCamera {
+    type Storage = NullStorage<Self>;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FullColor {
     pub r: u8,

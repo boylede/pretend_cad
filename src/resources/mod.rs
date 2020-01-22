@@ -1,7 +1,18 @@
 use crate::common::{GenerationID, GenerationVec};
 use crate::components::Color;
-use amethyst::prelude::*;
+use amethyst::{
+    core::transform::Transform,
+    input::{is_close_requested, is_key_down, VirtualKeyCode},
+    prelude::*,
+    renderer::{
+        camera::{Camera, Projection},
+        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
+        palette::Srgba,
+    },
+    window::ScreenDimensions,
+};
 use std::collections::HashMap;
+use specs::prelude::*;
 
 pub type Layers = GenerationVec<Layer>;
 
@@ -63,3 +74,52 @@ struct CommandBuilder {
 }
 
 struct InputDesc {}
+
+
+pub struct ViewInfo {
+    pub zoom_level: f64,
+    pub origin_x: f64,
+    pub origin_y: f64,
+    pub domain_h: f64,
+    pub domain_w: f64,
+}
+
+impl ViewInfo {
+    fn pan(&mut self, x: f64, y: f64) {
+        //
+    }
+    fn zoom(&mut self, z: f64) {
+        //
+    }
+    fn reset_camera(&self, world: &mut World) {
+        world.exec(|(mut cameras, mut view_info): (WriteStorage<Camera>, WriteExpect<ViewInfo>)| {
+            for cam in (&mut cameras).join() {
+                let half_width = view_info.domain_w / 2.0;
+                let half_height = view_info.domain_h / 2.0;
+                let left = view_info.origin_x - half_width;
+                // let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
+                let right = view_info.origin_x + half_width;
+                // let right = left + (self.domain_w * self.zoom_level) as f32;
+                let top = view_info.origin_y + half_height;
+                // let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
+                let bottom = view_info.origin_y - half_height;
+                // let bottom = top - (self.domain_h * self.zoom_level) as f32;
+                let new_cam: Projection =
+                    Projection::orthographic(left as f32, right as f32, bottom as f32, top as f32, 10.0, -10.0).into();
+                cam.set_projection(new_cam);
+            }
+        });
+    }
+}
+
+impl Default for ViewInfo {
+    fn default() -> Self {
+        ViewInfo {
+            zoom_level: 1.0,
+            origin_x: 0.0,
+            origin_y: 0.0,
+            domain_h: 10.0,
+            domain_w: 10.0,
+        }
+    }
+}
