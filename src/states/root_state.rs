@@ -7,19 +7,17 @@ use amethyst::{
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
     },
-    window::ScreenDimensions,
+    // window::ScreenDimensions,
 };
 use specs::prelude::*;
 use winit::WindowEvent;
 
 use crate::{
     commands,
-    components::{Color, Drawable, FullColor, Line, ActiveCamera},
-    resources::{CommandList, Layer, Layers, LineType, LineTypes, ViewInfo},
+    components::{Color, Drawable, FullColor, ActiveCamera},
+    resources::{ Layer, Layers, LineType, LineTypes, ViewInfo},
     states::{CommandEntryState, PanState},
 };
-
-use std::collections::HashMap;
 
 pub struct RootState {
     // pub zoom_level: f64,
@@ -32,7 +30,7 @@ pub struct RootState {
 
 impl RootState {
     fn reset_camera(&mut self, w: &mut World) {
-        w.exec(|(mut cameras, mut view_info): (WriteStorage<Camera>, WriteExpect<ViewInfo>)| {
+        w.exec(|(mut cameras, view_info): (WriteStorage<Camera>, ReadExpect<ViewInfo>)| {
             for cam in (&mut cameras).join() {
                 let half_width = view_info.domain_w / 2.0;
                 let half_height = view_info.domain_h / 2.0;
@@ -81,7 +79,7 @@ impl SimpleState for RootState {
             locked: false,
         };
         let mut layers = Layers::new();
-        let layer_id = layers.push(first_layer);
+        let _layer_id = layers.push(first_layer);
 
         data.world.insert(layers);
         // for _ in 0..99 {
@@ -93,10 +91,10 @@ impl SimpleState for RootState {
 
         let mut debug_lines_component = DebugLinesComponent::new();
 
-        let (screen_w, screen_h) = {
-            let screen_dimensions = data.world.read_resource::<ScreenDimensions>();
-            (screen_dimensions.width(), screen_dimensions.height())
-        };
+        // let (screen_w, screen_h) = {
+        //     let screen_dimensions = data.world.read_resource::<ScreenDimensions>();
+        //     (screen_dimensions.width(), screen_dimensions.height())
+        // };
 
         // let ()
 
@@ -253,7 +251,7 @@ impl SimpleState for RootState {
                     }
                 }
             }
-            StateEvent::Ui(event) => {
+            StateEvent::Ui(_event) => {
                 //uievent
 
                 // println!("found input event of type StateEvent::Ui({:?})", event.event_type);

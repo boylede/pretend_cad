@@ -75,7 +75,7 @@ impl SimpleState for CommandEntryState {
     }
     fn on_stop(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         if let Some(command_ui) = self.command_ui {
-            data.world.delete_entity(command_ui);
+            data.world.delete_entity(command_ui).unwrap();
         }
     }
     fn handle_event(
@@ -105,7 +105,7 @@ impl SimpleState for CommandEntryState {
                 {
                     use crate::common::{as_alphanumeric, is_confirmation};
                     if let Some(letter) = as_alphanumeric(*key) {
-                        self.command.write_char(letter);
+                        self.command.write_char(letter).unwrap();
                         if let Some(ui) = self.command_ui {
                             w.exec(|mut ui_text: WriteStorage<UiText>| {
                                 let text = ui_text.get_mut(ui).expect("failed to find UiText");
@@ -115,7 +115,6 @@ impl SimpleState for CommandEntryState {
                     }
                     if let Some(activate) = is_confirmation(*key) {
                         // println!("command: {}", self.command);
-                        use winit::ElementState::*;    
                         if activate {
                             return interpret_command(w, &self.command);
                         } else {
@@ -172,8 +171,8 @@ impl SimpleState for CommandEntryState {
                 //     _ => (),
                 // }
             }
-            StateEvent::Ui(event) => (),
-            StateEvent::Input(event) => (),
+            StateEvent::Ui(_event) => (),
+            StateEvent::Input(_event) => (),
         }
         Trans::None
     }
