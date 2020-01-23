@@ -192,7 +192,8 @@ impl ViewInfo {
         // });
     // }
     pub fn resize(&mut self, width: f64, height: f64) {
-
+        self.screen.width = width;
+        self.screen.height = height;
     }
 }
 
