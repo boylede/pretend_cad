@@ -1,17 +1,16 @@
 use amethyst::{
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
-    renderer::camera::{Camera, Orthographic, Projection},
+    renderer::camera::{Camera},
 };
 use specs::prelude::*;
 use winit::WindowEvent;
 
-use crate::{resources::ViewInfo, components::ActiveCamera};
+use crate::{resources::ViewInfo, components::ActiveCamera, common::ScreenTranslation};
 
 pub struct PanState {
     pub initial: (f64, f64),
     pub last: (f64, f64),
-    pub accumulated_delta: (f64, f64),
 }
 
 impl PanState {
@@ -19,38 +18,13 @@ impl PanState {
         PanState {
             initial,
             last: initial,
-            accumulated_delta: (0.0, 0.0),
         }
     }
-    fn move_camera(&mut self, w: &mut World, ex: f64, ey: f64) {
-        self.accumulated_delta = (self.accumulated_delta.0 + ex, self.accumulated_delta.1 + ey);
-        w.exec(|(mut cameras, active_camera, mut view_info): (WriteStorage<Camera>, ReadStorage<ActiveCamera>, WriteExpect<ViewInfo>)| {
-            let (dx, dy) = (self.accumulated_delta.0 * view_info.zoom_level, self.accumulated_delta.1 * view_info.zoom_level );
-            view_info.origin_x = view_info.origin_x - dx;
-            view_info.origin_y = view_info.origin_y - dy;
-            view_info.domain_h = view_info.domain_h - dy;
-            view_info.domain_w = view_info.domain_w - dx;
-            for (cam, _) in (&mut cameras, &active_camera).join() {
-                let p = cam.projection();
-                let left;
-                let right;
-                let top;
-                let bottom;
-                match p {
-                    Projection::Orthographic(o) => {
-                        println!("moving camera {},{}", dx, dy);
-                        left = o.left() - dx as f32;
-                        right = o.right() - dx as f32;
-                        top = o.top() - dy as f32;
-                        bottom = o.bottom() - dy as f32;
-                        // o.set_bottom_and_top(bottom, top);
-                        // o.set_left_and_right(left, right);
-                    }
-                    _ => unimplemented!(),
-                }
-                cam.set_projection(Projection::Orthographic(Orthographic::new(
-                    left, right, bottom, top, 10.0, -10.0,
-                )));
+    fn move_camera(&mut self, w: &mut World, dx: f32, dy: f32) {
+        w.exec(|(mut cameras, active_cameras, mut view_info): (WriteStorage<Camera>, ReadStorage<ActiveCamera>, WriteExpect<ViewInfo>)| {
+            view_info.pan(ScreenTranslation{dx, dy});
+            for (cam, _) in (&mut cameras, &active_cameras).join() {
+                cam.set_projection(view_info.projection());
             }
         });
     }
@@ -85,7 +59,7 @@ impl SimpleState for PanState {
                                 // println!("dragged to {},{}", dx, dy);
                                 self.last.0 = x;
                                 self.last.1 = y;
-                                self.move_camera(w, dx, dy);
+                                self.move_camera(w, dx as f32, dy as f32);
                             }
                             WindowEvent::MouseWheel { .. } => {
                                 // unexpected
@@ -95,9 +69,7 @@ impl SimpleState for PanState {
                                 use winit::MouseButton::*;
                                 match (button, state) {
                                     (Middle, Released) => {
-                                        let dx = self.last.0 - self.initial.0;
-                                        let dy = self.last.1 - self.initial.1;
-                                        println!("ended drag, mouse moved {}, {}", dx, dy);
+                                        // println!("ended drag, mouse moved {}, {}", dx, dy);
                                         return Trans::Pop;
                                     }
                                     _ => {}

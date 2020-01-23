@@ -1,5 +1,5 @@
-use crate::common::{GenerationID, GenerationVec};
-use crate::components::Color;
+use crate::common::{GenerationID, GenerationVec, WorldScaleFactor, WorldPos, ScreenSize, ScreenTranslation};
+use crate::components::{Color, ActiveCamera};
 use amethyst::{
     core::transform::Transform,
     input::{is_close_requested, is_key_down, VirtualKeyCode},
@@ -76,50 +76,85 @@ struct CommandBuilder {
 struct InputDesc {}
 
 
-pub struct ViewInfo {
-    pub zoom_level: f64,
-    pub origin_x: f64,
-    pub origin_y: f64,
-    pub domain_h: f64,
-    pub domain_w: f64,
 }
 
-impl ViewInfo {
-    fn pan(&mut self, x: f64, y: f64) {
-        //
-    }
-    fn zoom(&mut self, z: f64) {
-        //
-    }
-    fn reset_camera(&self, world: &mut World) {
-        world.exec(|(mut cameras, mut view_info): (WriteStorage<Camera>, WriteExpect<ViewInfo>)| {
-            for cam in (&mut cameras).join() {
-                let half_width = view_info.domain_w / 2.0;
-                let half_height = view_info.domain_h / 2.0;
-                let left = view_info.origin_x - half_width;
-                // let left = ((self.domain_w * self.zoom_level) / -2.0).trunc() as f32;
-                let right = view_info.origin_x + half_width;
-                // let right = left + (self.domain_w * self.zoom_level) as f32;
-                let top = view_info.origin_y + half_height;
-                // let top = ((self.domain_h * self.zoom_level) / 2.0).trunc() as f32;
-                let bottom = view_info.origin_y - half_height;
-                // let bottom = top - (self.domain_h * self.zoom_level) as f32;
-                let new_cam: Projection =
-                    Projection::orthographic(left as f32, right as f32, bottom as f32, top as f32, 10.0, -10.0).into();
-                cam.set_projection(new_cam);
-            }
-        });
-    }
+pub enum CapturedInput {
+    Point(f64, f64),
+    Select(Entity),
+    Multiselect(Vec<Entity>),
+}
+
+
+pub struct ViewInfo {
+    zoom_level: WorldScaleFactor,
+    depth: f32,
+    origin: WorldPos,
+    screen: ScreenSize,
 }
 
 impl Default for ViewInfo {
     fn default() -> Self {
         ViewInfo {
-            zoom_level: 1.0,
-            origin_x: 0.0,
-            origin_y: 0.0,
-            domain_h: 10.0,
-            domain_w: 10.0,
+            zoom_level: Default::default(),
+            depth: 20.0,
+            origin: Default::default(),
+            screen: Default::default(),
         }
     }
 }
+
+impl ViewInfo {
+    pub fn width(&self) -> f32 {
+        self.screen.width as f32 * self.zoom_level.factor
+    }
+    pub fn height(&self) -> f32 {
+        self.screen.height as f32 * self.zoom_level.factor
+    }
+    pub fn projection(&self) -> Projection {
+        let half_width = self.width() / 2.0;
+        let half_height = self.height() / 2.0;
+        let half_depth = self.depth / 2.0;
+        
+        let o_x = self.origin.x as f32;
+        let o_y = self.origin.y as f32;
+        let o_z = self.origin.z as f32;
+
+        let left = o_x - half_width;
+        let right = o_x + half_width;
+        let bottom = o_y - half_height;
+        let top = o_y + half_height;
+        let z_near = o_z - half_depth;
+        let z_far = o_z + half_depth;
+        
+        Projection::orthographic(
+            left,
+            right,
+            bottom,
+            top,
+            z_near,
+            z_far,
+        )
+    }
+    pub fn pan(&mut self, delta: ScreenTranslation) {
+        self.origin = self.origin - (self.zoom_level * delta);
+    }
+    pub fn zoom(&mut self, z: f32) {
+        if z > 0.0 {
+            self.zoom_level.increase();
+        } else if z < 0.0 {
+            self.zoom_level.decrease();
+        }
+    }
+
+    // pub fn reset_camera(&self, cam: &mut Camera) {
+        // world.exec(|(mut cameras, mut view_info, active_camera): (WriteStorage<Camera>, WriteExpect<ViewInfo>, ReadStorage<ActiveCamera>)| {
+            // for (cam, _) in (&mut cameras, &active_camera).join() {
+        // cam.set_projection(self.projection());
+            // }
+        // });
+    // }
+    pub fn resize(&mut self, width: f64, height: f64) {
+
+    }
+}
+
