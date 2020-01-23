@@ -1,31 +1,29 @@
 use amethyst::{
-    core::transform::Transform,
-    input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{
-        camera::{Camera, Projection},
-        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
+        debug_drawing::{DebugLinesComponent},
         palette::Srgba,
     },
-    window::ScreenDimensions,
 };
 
 use crate::{
-    components::{Color, Drawable, FullColor, Line, Point},
-    resources::{CommandList, Layer, Layers, LineType, LineTypes},
-    states::{CommandEntryState, PanState},
+    components::{ FullColor, Point},
+    resources::{CommandList, CommandDesc, CommandDescBuilder, InputDesc},
 };
-
-use std::collections::HashMap;
 
 pub fn register_commands() -> CommandList {
     let mut commands = CommandList::new();
-    commands.add("quit".to_string(), Box::new(quit_command));
-    commands.add("line".to_string(), Box::new(line_command));
+    // quit
+    // commands.add("quit".to_string(), Box::new(quit_command));
+    let quit = CommandDescBuilder::new("quit").with_function(Box::new(quit_command)).build();
+    commands.add("quit", quit);
+    
+    //line
+    // commands.add("line".to_string(), Box::new(line_command));
     commands
 }
 
-fn quit_command(w: &mut World) -> SimpleTrans {
+fn quit_command(_: &mut World, _: &mut Vec<InputDesc>) -> SimpleTrans {
     Trans::Quit
 }
 

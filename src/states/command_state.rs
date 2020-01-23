@@ -1,28 +1,27 @@
 use amethyst::{
     assets::{
-        AssetPrefab, AssetStorage, Format, Handle, Loader, Prefab, PrefabData, PrefabLoaderSystem,
-        PrefabLoaderSystemDesc, Progress, ProgressCounter,
+        AssetStorage, Loader,
     },
-    core::transform::Transform,
     ecs::prelude::*,
-    input::{is_close_requested, is_key_down, VirtualKeyCode},
+    input::{is_close_requested},
     prelude::*,
-    renderer::{
-        camera::{Camera, Projection},
-        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
-        palette::Srgba,
-    },
     ui::{
-        get_default_font, Anchor, FontAsset, RenderUi, Stretch, TextEditing, UiBundle, UiCreator,
-        UiEvent, UiFinder, UiText, UiTransform,
+        get_default_font, Anchor, FontAsset, TextEditing,
+         UiText, UiTransform,
     },
-    window::ScreenDimensions,
+
 };
 
 use std::fmt::Write;
 use winit::WindowEvent;
 
-use crate::resources::{Command, CommandList};
+use crate::{resources::{CommandList, InputDesc, CapturedInput, CommandDesc}, common::reset_camera};
+
+pub struct InputCollectionState {
+    pub command: CommandDesc,
+    pub desired_inputs: Vec<InputDesc>,
+    pub found_inputs: Vec<CapturedInput>,
+}
 
 pub struct CommandEntryState {
     pub command: String,
@@ -182,11 +181,16 @@ fn interpret_command(w: &mut World, name: &String) -> SimpleTrans {
     let command;
     {
         let commands = w.read_resource::<CommandList>();
-        command = commands.get(name).cloned();
+        command = commands.get(name);
     }
 
-    if let Some(func) = command {
-        return func(w);
+        /*
+    if let Some(command) = command {
+        if let Some(exec) = command.exec {
+            return Trans::Switch(command_builder);
+            // return exec(w);
+        }
     }
+    */
     return Trans::Pop;
 }

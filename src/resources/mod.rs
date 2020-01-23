@@ -43,7 +43,7 @@ impl LineType {
 }
 
 pub struct CommandList {
-    inner: HashMap<String, Command>,
+    inner: HashMap<String, CommandDesc>,
 }
 
 impl CommandList {
@@ -52,30 +52,68 @@ impl CommandList {
             inner: HashMap::new(),
         }
     }
-    pub fn add(&mut self, key: String, value: Command) {
-        self.inner.insert(key, value);
+    pub fn add(&mut self, key: &str, value: CommandDesc) {
+        self.inner.insert(key.to_string(), value);
     }
-    pub fn get(&self, key: &str) -> Option<&Command> {
+    pub fn get(&self, key: &str) -> Option<&CommandDesc> {
         self.inner.get(key)
     }
 }
 
-pub type Command = Box<fn(&mut World) -> SimpleTrans>;
+pub type Command = Box<fn(&mut World, &mut Vec<InputDesc>) -> SimpleTrans>;
 
 // Box<dyn Command>
 // trait Command {
 //     fn run(&mut self, world: &mut World) -> SimpleTrans;
 // }
 
-struct CommandBuilder {
-    name: String,
+pub struct CommandDescBuilder {
+    name: Option<String>,
     inputs: Vec<InputDesc>,
-    exec: Box<fn(&mut World) -> SimpleTrans>,
+    exec: Option<Command>,
 }
 
-struct InputDesc {}
+impl CommandDescBuilder {
+    pub fn new(name: &str) -> Self {
+        CommandDescBuilder {
+            name: Some(name.to_string()),
+            inputs: vec![],
+            exec: None,
+        }
+    }
+    pub fn with_input(mut self, input: InputDesc) -> Self {
+        self.inputs.push(input);
+        self
+    }
+    pub fn with_function(mut self, func: Command) -> Self {
+        self.exec = Some(func);
+        self
+    }
+    pub fn build(self) -> CommandDesc {
+        if self.name.is_none() || self.exec.is_none() {
+            panic!("tried to build an incomplete command");
+        } else {
+            CommandDesc {
+                name: self.name.unwrap(),
+                inputs: self.inputs,
+                exec: self.exec.unwrap(),
+            }
+        }
+    }
+}
+
+pub struct CommandDesc {
+    pub name: String,
+    pub inputs: Vec<InputDesc>,
+    pub exec: Box<fn(&mut World, &mut Vec<InputDesc>) -> SimpleTrans>,
+}
 
 
+
+pub enum InputDesc {
+    Point,
+    Select,
+    Multiselect,
 }
 
 pub enum CapturedInput {

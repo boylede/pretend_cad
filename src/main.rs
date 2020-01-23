@@ -7,7 +7,7 @@ use amethyst::{
         types::DefaultBackend,
         RenderingBundle,
     },
-    ui::{RenderUi, UiBundle, UiCreator, UiEvent, UiFinder, UiText},
+    ui::{RenderUi, UiBundle},
     window::DisplayConfig,
     LoggerConfig, StdoutLog,
 };
