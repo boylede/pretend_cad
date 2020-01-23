@@ -1,4 +1,22 @@
-use amethyst::input::VirtualKeyCode;
+use amethyst::{
+    core::transform::Transform,
+    input::{is_close_requested, is_key_down, VirtualKeyCode},
+    prelude::*,
+    renderer::{
+        camera::{Camera, Projection},
+        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
+        palette::Srgba,
+    },
+};
+use specs::prelude::*;
+use winit::WindowEvent;
+
+use crate::{
+    commands,
+    components::{Color, Drawable, FullColor, ActiveCamera},
+    resources::{ Layer, Layers, LineType, LineTypes, ViewInfo},
+    states::{CommandEntryState, PanState},
+};
 
 #[derive(Debug, PartialEq)]
 pub struct GenerationID<M> {
@@ -246,4 +264,90 @@ pub fn is_confirmation(key: VirtualKeyCode) -> Option<bool> {
         Tab => Some(true),
         _ => None,
     }
+}
+
+#[derive(Copy, Clone)]
+pub struct WorldScaleFactor {
+    pub factor: f32,
+}
+
+impl WorldScaleFactor {
+    pub fn increase(&mut self) {
+        self.factor = self.factor / 1.1;
+    }
+    pub fn decrease(&mut self) {
+        self.factor = self.factor * 1.1;
+    }
+}
+
+use std::ops::Mul;
+impl Mul<ScreenTranslation> for WorldScaleFactor {
+    type Output = WorldPos;
+    fn mul(self, rhs: ScreenTranslation) -> Self::Output {
+        WorldPos {
+            x: (self.factor * rhs.dx) as f64,
+            y: (self.factor * rhs.dy) as f64,
+            z: 0.0,
+        }
+    }
+}
+
+impl Default for WorldScaleFactor {
+    fn default() -> Self {
+        WorldScaleFactor {
+            factor: 1.0,
+        }
+    }
+}
+
+#[derive(Default, Copy, Clone)]
+pub struct ScreenTranslation {
+    pub dx: f32,
+    pub dy: f32,
+}
+
+pub struct ScreenSize {
+    pub width: f64,
+    pub height: f64,
+}
+
+impl Default for ScreenSize {
+    fn default() -> Self {
+        ScreenSize {
+            width: 600.0,
+            height: 600.0,
+        }
+    }
+}
+
+pub struct ScreenPos {
+    x: f64,
+    y: f64,
+}
+
+#[derive(Default, Copy, Clone)]
+pub struct WorldPos {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+use std::ops::Sub;
+impl Sub for WorldPos {
+    type Output = WorldPos;
+    fn sub(self, rhs: WorldPos) -> Self::Output {
+        WorldPos {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+pub fn reset_camera(w: &mut World) {
+    w.exec(|(mut cameras, view_info, active_camera): (WriteStorage<Camera>, ReadExpect<ViewInfo>, ReadStorage<ActiveCamera>)| {
+        for (cam, _) in (&mut cameras, &active_camera).join() {
+            cam.set_projection(view_info.projection());
+        }
+    });
 }
