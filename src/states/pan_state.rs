@@ -1,12 +1,12 @@
 use amethyst::{
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
-    renderer::camera::{Camera},
+    renderer::camera::Camera,
 };
 use specs::prelude::*;
 use winit::WindowEvent;
 
-use crate::{resources::ViewInfo, components::ActiveCamera, common::ScreenTranslation};
+use crate::{common::ScreenTranslation, components::ActiveCamera, resources::ViewInfo};
 
 pub struct PanState {
     pub initial: (f64, f64),
@@ -21,12 +21,18 @@ impl PanState {
         }
     }
     fn move_camera(&mut self, w: &mut World, dx: f32, dy: f32) {
-        w.exec(|(mut cameras, active_cameras, mut view_info): (WriteStorage<Camera>, ReadStorage<ActiveCamera>, WriteExpect<ViewInfo>)| {
-            view_info.pan(ScreenTranslation{dx, dy});
-            for (cam, _) in (&mut cameras, &active_cameras).join() {
-                cam.set_projection(view_info.projection());
-            }
-        });
+        w.exec(
+            |(mut cameras, active_cameras, mut view_info): (
+                WriteStorage<Camera>,
+                ReadStorage<ActiveCamera>,
+                WriteExpect<ViewInfo>,
+            )| {
+                view_info.pan(ScreenTranslation { dx, dy });
+                for (cam, _) in (&mut cameras, &active_cameras).join() {
+                    cam.set_projection(view_info.projection());
+                }
+            },
+        );
     }
 }
 

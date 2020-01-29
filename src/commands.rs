@@ -1,14 +1,11 @@
 use amethyst::{
     prelude::*,
-    renderer::{
-        debug_drawing::{DebugLinesComponent},
-        palette::Srgba,
-    },
+    renderer::{debug_drawing::DebugLinesComponent, palette::Srgba},
 };
 
 use crate::{
-    components::{ FullColor, Point},
-    resources::{CommandList, CommandDesc, CommandDescBuilder, InputDesc},
+    components::{FullColor, Point},
+    resources::{CommandDescBuilder, CommandList, InputDesc},
 };
 
 pub fn register_commands() -> CommandList {
@@ -40,15 +37,15 @@ pub fn register_commands() -> CommandList {
     commands
 }
 
-fn arc_command(_: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
+fn arc_command(_: &mut World, _: &[InputDesc]) -> SimpleTrans {
     Trans::Quit
 }
 
-fn quit_command(_: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
+fn quit_command(_: &mut World, _: &[InputDesc]) -> SimpleTrans {
     Trans::Quit
 }
 
-fn line_command(w: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
+fn line_command(w: &mut World, _: &[InputDesc]) -> SimpleTrans {
     use nalgebra::geometry::Point as nPoint;
     use rand::prelude::*;
     let mut rng = rand::thread_rng();

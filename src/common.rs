@@ -1,22 +1,7 @@
-use amethyst::{
-    core::transform::Transform,
-    input::{is_close_requested, is_key_down, VirtualKeyCode},
-    prelude::*,
-    renderer::{
-        camera::{Camera, Projection},
-        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
-        palette::Srgba,
-    },
-};
+use amethyst::{input::VirtualKeyCode, prelude::*, renderer::camera::Camera};
 use specs::prelude::*;
-use winit::WindowEvent;
 
-use crate::{
-    commands,
-    components::{Color, Drawable, FullColor, ActiveCamera},
-    resources::{ Layer, Layers, LineType, LineTypes, ViewInfo},
-    states::{CommandEntryState, PanState},
-};
+use crate::{components::ActiveCamera, resources::ViewInfo};
 
 #[derive(Debug, PartialEq)]
 pub struct GenerationID<M> {
@@ -273,10 +258,10 @@ pub struct WorldScaleFactor {
 
 impl WorldScaleFactor {
     pub fn increase(&mut self) {
-        self.factor = self.factor / 1.1;
+        self.factor /= 1.1;
     }
     pub fn decrease(&mut self) {
-        self.factor = self.factor * 1.1;
+        self.factor *= 1.1;
     }
 }
 
@@ -294,9 +279,7 @@ impl Mul<ScreenTranslation> for WorldScaleFactor {
 
 impl Default for WorldScaleFactor {
     fn default() -> Self {
-        WorldScaleFactor {
-            factor: 1.0,
-        }
+        WorldScaleFactor { factor: 1.0 }
     }
 }
 
@@ -345,9 +328,15 @@ impl Sub for WorldPos {
 }
 
 pub fn reset_camera(w: &mut World) {
-    w.exec(|(mut cameras, view_info, active_camera): (WriteStorage<Camera>, ReadExpect<ViewInfo>, ReadStorage<ActiveCamera>)| {
-        for (cam, _) in (&mut cameras, &active_camera).join() {
-            cam.set_projection(view_info.projection());
-        }
-    });
+    w.exec(
+        |(mut cameras, view_info, active_camera): (
+            WriteStorage<Camera>,
+            ReadExpect<ViewInfo>,
+            ReadStorage<ActiveCamera>,
+        )| {
+            for (cam, _) in (&mut cameras, &active_camera).join() {
+                cam.set_projection(view_info.projection());
+            }
+        },
+    );
 }

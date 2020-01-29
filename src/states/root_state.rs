@@ -3,7 +3,7 @@ use amethyst::{
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{
-        camera::{Camera},
+        camera::Camera,
         debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
         palette::Srgba,
     },
@@ -13,10 +13,10 @@ use winit::WindowEvent;
 
 use crate::{
     commands,
-    components::{Color, Drawable, FullColor, ActiveCamera},
-    resources::{ Layer, Layers, LineType, LineTypes, ViewInfo},
-    states::{CommandEntryState, PanState},
     common::reset_camera,
+    components::{ActiveCamera, Color, Drawable, FullColor},
+    resources::{Layer, Layers, LineType, LineTypes, ViewInfo},
+    states::{CommandEntryState, PanState},
 };
 
 pub struct RootState {
@@ -92,23 +92,12 @@ impl SimpleState for RootState {
             );
         }
 
-        w
-            .create_entity()
-            .with(debug_lines_component)
-            .build();
+        w.create_entity().with(debug_lines_component).build();
 
         let mut local_transform = Transform::default();
-        local_transform.set_translation_xyz(
-            10.0 / 2.0,
-            10.0 / 2.0,
-            10.0,
-        );
-        w
-            .create_entity()
-            .with(Camera::standard_2d(
-                1.0,
-                1.0,
-            ))
+        local_transform.set_translation_xyz(10.0 / 2.0, 10.0 / 2.0, 10.0);
+        w.create_entity()
+            .with(Camera::standard_2d(1.0, 1.0))
             .with(local_transform)
             .with(ActiveCamera)
             .build();
@@ -217,13 +206,12 @@ impl SimpleState for RootState {
                 use amethyst::input::ScrollDirection;
                 match event {
                     InputEvent::MouseWheelMoved(direction) => {
-                        
                         match direction {
                             ScrollDirection::ScrollUp => {
                                 // println!("scroll moved");
                                 {
                                     let mut view_info = w.write_resource::<ViewInfo>();
-                                    view_info.zoom(1.0)
+                                    view_info.zoom(1)
                                 }
                                 reset_camera(w);
                             }

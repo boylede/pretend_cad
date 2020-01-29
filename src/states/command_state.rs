@@ -1,29 +1,15 @@
 use amethyst::{
-    assets::{
-        AssetStorage, Loader,
-    },
+    assets::{AssetStorage, Loader},
     ecs::prelude::*,
-    input::{is_close_requested},
+    input::is_close_requested,
     prelude::*,
-    ui::{
-        get_default_font, Anchor, FontAsset, TextEditing,
-         UiText, UiTransform,
-    },
-
+    ui::{get_default_font, Anchor, FontAsset, TextEditing, UiText, UiTransform},
 };
 
 use std::fmt::Write;
 use winit::WindowEvent;
 
-use crate::{
-    resources::{
-        CommandList, InputDesc, CapturedInput, CommandDesc
-    },
-    common::reset_camera,
-    states::InputCollectionState,
-};
-
-
+use crate::{resources::CommandList, states::InputCollectionState};
 
 pub struct CommandEntryState {
     pub command: String,
@@ -179,7 +165,7 @@ impl SimpleState for CommandEntryState {
     }
 }
 
-fn instantiate_command(w: &mut World, name: &String) -> SimpleTrans {
+fn instantiate_command(w: &mut World, name: &str) -> SimpleTrans {
     let command;
     {
         let commands = w.read_resource::<CommandList>();
@@ -187,7 +173,7 @@ fn instantiate_command(w: &mut World, name: &String) -> SimpleTrans {
     }
 
     if let Some(command) = command {
-        if command.inputs.len() == 0 {
+        if command.inputs.is_empty() {
             return (command.exec)(w, &command.inputs);
         } else {
             let new_state = InputCollectionState {
@@ -199,6 +185,6 @@ fn instantiate_command(w: &mut World, name: &String) -> SimpleTrans {
         }
     }
 
-    return Trans::Pop;
+    Trans::Pop
 }
 

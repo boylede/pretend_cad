@@ -74,7 +74,7 @@ impl Line {
         let line = Drawable::Line(Line {
             start: a,
             end: b,
-            layer: layer,
+            layer,
             color: Color::Full(c),
             scale: 1.0,
             linetype: style,

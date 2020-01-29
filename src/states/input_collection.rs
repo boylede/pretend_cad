@@ -1,24 +1,6 @@
-use amethyst::{
-    assets::{
-        AssetStorage, Loader,
-    },
-    ecs::prelude::*,
-    input::{is_close_requested},
-    prelude::*,
-    ui::{
-        get_default_font, Anchor, FontAsset, TextEditing,
-         UiText, UiTransform,
-    },
+use amethyst::prelude::*;
 
-};
-
-use crate::{
-    resources::{
-        CommandList, InputDesc, CapturedInput, CommandDesc
-    },
-    common::reset_camera,
-};
-
+use crate::resources::{CapturedInput, CommandDesc};
 
 pub struct InputCollectionState {
     pub command: CommandDesc,

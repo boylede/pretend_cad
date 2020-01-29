@@ -1,18 +1,11 @@
-use crate::common::{GenerationID, GenerationVec, WorldScaleFactor, WorldPos, ScreenSize, ScreenTranslation};
-use crate::components::{Color, ActiveCamera};
-use amethyst::{
-    core::transform::Transform,
-    input::{is_close_requested, is_key_down, VirtualKeyCode},
-    prelude::*,
-    renderer::{
-        camera::{Camera, Projection},
-        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
-        palette::Srgba,
-    },
-    window::ScreenDimensions,
+use crate::common::{
+    GenerationID, GenerationVec, ScreenSize, ScreenTranslation, WorldPos, WorldScaleFactor,
 };
-use std::collections::HashMap;
+use crate::components::Color;
+use amethyst::{prelude::*, renderer::camera::Projection};
+
 use specs::prelude::*;
+use std::collections::HashMap;
 
 pub type Layers = GenerationVec<Layer>;
 
@@ -71,7 +64,7 @@ impl CommandList {
     }
 }
 
-pub type CommandFunc = Box<fn(&mut World, &Vec<InputDesc>) -> SimpleTrans>;
+pub type CommandFunc = Box<fn(&mut World, &[InputDesc]) -> SimpleTrans>;
 
 // Box<dyn Command>
 // trait CommandFunc {
@@ -117,7 +110,7 @@ impl CommandDescBuilder {
 pub struct CommandDesc {
     pub name: String,
     pub inputs: Vec<InputDesc>,
-    pub exec: Box<fn(&mut World, &Vec<InputDesc>) -> SimpleTrans>,
+    pub exec: CommandFunc,
 }
 
 #[derive(Clone)]
@@ -138,7 +131,6 @@ pub enum CapturedInput {
 //         match
 //     }
 // }
-
 
 pub struct ViewInfo {
     zoom_level: WorldScaleFactor,
@@ -169,7 +161,7 @@ impl ViewInfo {
         let half_width = self.width() / 2.0;
         let half_height = self.height() / 2.0;
         let half_depth = self.depth / 2.0;
-        
+
         let o_x = self.origin.x as f32;
         let o_y = self.origin.y as f32;
         let o_z = self.origin.z as f32;
@@ -180,24 +172,18 @@ impl ViewInfo {
         let top = o_y + half_height;
         let z_near = o_z - half_depth;
         let z_far = o_z + half_depth;
-        
-        Projection::orthographic(
-            left,
-            right,
-            bottom,
-            top,
-            z_near,
-            z_far,
-        )
+
+        Projection::orthographic(left, right, bottom, top, z_near, z_far)
     }
     pub fn pan(&mut self, delta: ScreenTranslation) {
         self.origin = self.origin - (self.zoom_level * delta);
     }
-    pub fn zoom(&mut self, z: f32) {
-        if z > 0.0 {
-            self.zoom_level.increase();
-        } else if z < 0.0 {
-            self.zoom_level.decrease();
+    pub fn zoom(&mut self, z: i32) {
+        use std::cmp::Ordering;
+        match z.cmp(&0) {
+            Ordering::Greater => self.zoom_level.increase(),
+            Ordering::Less => self.zoom_level.decrease(),
+            Ordering::Equal => (),
         }
     }
 
