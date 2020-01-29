@@ -15,7 +15,14 @@ use amethyst::{
 use std::fmt::Write;
 use winit::WindowEvent;
 
-use crate::{resources::{CommandList, InputDesc, CapturedInput, CommandDesc}, common::reset_camera};
+use crate::{
+    resources::{
+        CommandList, InputDesc, CapturedInput, CommandDesc
+    },
+    common::reset_camera,
+    states::InputCollectionState,
+};
+
 
 
 pub struct CommandEntryState {
@@ -176,16 +183,22 @@ fn instantiate_command(w: &mut World, name: &String) -> SimpleTrans {
     let command;
     {
         let commands = w.read_resource::<CommandList>();
-        command = commands.get(name);
+        command = commands.get(name).cloned();
     }
 
-        /*
     if let Some(command) = command {
-        if let Some(exec) = command.exec {
-            return Trans::Switch(command_builder);
-            // return exec(w);
+        if command.inputs.len() == 0 {
+            return (command.exec)(w, &command.inputs);
+        } else {
+            let new_state = InputCollectionState {
+                command,
+                current_input: 0,
+                found_inputs: vec![],
+            };
+            return Trans::Switch(Box::new(new_state));
         }
     }
-    */
+
     return Trans::Pop;
 }
+
