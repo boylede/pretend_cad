@@ -113,14 +113,14 @@ impl CommandDescBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct CommandDesc {
     pub name: String,
     pub inputs: Vec<InputDesc>,
-    pub exec: Box<fn(&mut World, &mut Vec<InputDesc>) -> SimpleTrans>,
+    pub exec: Box<fn(&mut World, &Vec<InputDesc>) -> SimpleTrans>,
 }
 
-
-
+#[derive(Clone)]
 pub enum InputDesc {
     Point,
     Select,
@@ -132,6 +132,12 @@ pub enum CapturedInput {
     Select(Entity),
     Multiselect(Vec<Entity>),
 }
+
+// impl From<InputDesc> for CapturedInput {
+//     fn from(desc: InputDesc) -> Self {
+//         match
+//     }
+// }
 
 
 pub struct ViewInfo {

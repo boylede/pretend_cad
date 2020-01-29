@@ -23,7 +23,7 @@ pub fn register_commands() -> CommandList {
     commands
 }
 
-fn quit_command(_: &mut World, _: &mut Vec<InputDesc>) -> SimpleTrans {
+fn quit_command(_: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
     Trans::Quit
 }
 
