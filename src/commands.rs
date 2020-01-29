@@ -15,19 +15,40 @@ pub fn register_commands() -> CommandList {
     let mut commands = CommandList::new();
     // quit
     // commands.add("quit".to_string(), Box::new(quit_command));
-    let quit = CommandDescBuilder::new("quit").with_function(Box::new(quit_command)).build();
+    let quit = CommandDescBuilder::new("quit")
+        .with_function(Box::new(quit_command))
+        .build();
     commands.add("quit", quit);
-    
+    commands.alias("exit", "quit");
     //line
-    // commands.add("line".to_string(), Box::new(line_command));
+    let line = CommandDescBuilder::new("line")
+        .with_function(Box::new(line_command))
+        .with_input(InputDesc::Point)
+        .with_input(InputDesc::Point)
+        .build();
+    commands.add("line", line);
+    commands.alias("l", "line");
+
+    let arc = CommandDescBuilder::new("arc")
+        .with_function(Box::new(arc_command))
+        .with_input(InputDesc::Point)
+        .with_input(InputDesc::Point)
+        .with_input(InputDesc::Point)
+        .build();
+    commands.add("arc", arc);
+
     commands
+}
+
+fn arc_command(_: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
+    Trans::Quit
 }
 
 fn quit_command(_: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
     Trans::Quit
 }
 
-fn line_command(w: &mut World) -> SimpleTrans {
+fn line_command(w: &mut World, _: &Vec<InputDesc>) -> SimpleTrans {
     use nalgebra::geometry::Point as nPoint;
     use rand::prelude::*;
     let mut rng = rand::thread_rng();
