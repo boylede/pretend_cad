@@ -71,17 +71,17 @@ impl CommandList {
     }
 }
 
-pub type Command = Box<fn(&mut World, &mut Vec<InputDesc>) -> SimpleTrans>;
+pub type CommandFunc = Box<fn(&mut World, &Vec<InputDesc>) -> SimpleTrans>;
 
 // Box<dyn Command>
-// trait Command {
+// trait CommandFunc {
 //     fn run(&mut self, world: &mut World) -> SimpleTrans;
 // }
 
 pub struct CommandDescBuilder {
     name: Option<String>,
     inputs: Vec<InputDesc>,
-    exec: Option<Command>,
+    exec: Option<CommandFunc>,
 }
 
 impl CommandDescBuilder {
@@ -96,7 +96,7 @@ impl CommandDescBuilder {
         self.inputs.push(input);
         self
     }
-    pub fn with_function(mut self, func: Command) -> Self {
+    pub fn with_function(mut self, func: CommandFunc) -> Self {
         self.exec = Some(func);
         self
     }
