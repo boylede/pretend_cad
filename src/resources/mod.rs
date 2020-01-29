@@ -43,20 +43,31 @@ impl LineType {
 }
 
 pub struct CommandList {
-    inner: HashMap<String, CommandDesc>,
+    alias: HashMap<String, String>,
+    commands: HashMap<String, CommandDesc>,
 }
 
 impl CommandList {
     pub fn new() -> Self {
         CommandList {
-            inner: HashMap::new(),
+            alias: HashMap::new(),
+            commands: HashMap::new(),
         }
     }
     pub fn add(&mut self, key: &str, value: CommandDesc) {
-        self.inner.insert(key.to_string(), value);
+        self.commands.insert(key.to_string(), value);
     }
     pub fn get(&self, key: &str) -> Option<&CommandDesc> {
-        self.inner.get(key)
+        self.commands.get(key).or_else(|| {
+            if let Some(alias) = self.alias.get(key) {
+                self.commands.get(alias)
+            } else {
+                None
+            }
+        })
+    }
+    pub fn alias(&mut self, key: &str, command: &str) {
+        self.alias.insert(key.to_string(), command.to_string());
     }
 }
 
