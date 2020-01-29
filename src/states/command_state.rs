@@ -17,11 +17,6 @@ use winit::WindowEvent;
 
 use crate::{resources::{CommandList, InputDesc, CapturedInput, CommandDesc}, common::reset_camera};
 
-pub struct InputCollectionState {
-    pub command: CommandDesc,
-    pub desired_inputs: Vec<InputDesc>,
-    pub found_inputs: Vec<CapturedInput>,
-}
 
 pub struct CommandEntryState {
     pub command: String,
