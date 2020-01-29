@@ -115,7 +115,7 @@ impl SimpleState for CommandEntryState {
                     if let Some(activate) = is_confirmation(*key) {
                         // println!("command: {}", self.command);
                         if activate {
-                            return interpret_command(w, &self.command);
+                            return instantiate_command(w, &self.command);
                         } else {
                             return Trans::Pop;
                         }
@@ -153,7 +153,7 @@ impl SimpleState for CommandEntryState {
                 //                         match state {
                 //                             Pressed => {
                 //                                 if activate {
-                //                                     return interpret_command(w, &self.command);
+                //                                     return instantiate_command(w, &self.command);
                 //                                 } else {
                 //                                     // println!("cancelled command");
                 //                                     return Trans::Pop;
@@ -177,7 +177,7 @@ impl SimpleState for CommandEntryState {
     }
 }
 
-fn interpret_command(w: &mut World, name: &String) -> SimpleTrans {
+fn instantiate_command(w: &mut World, name: &String) -> SimpleTrans {
     let command;
     {
         let commands = w.read_resource::<CommandList>();
