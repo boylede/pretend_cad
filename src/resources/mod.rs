@@ -200,3 +200,13 @@ impl ViewInfo {
     }
 }
 
+#[derive(Default)]
+pub struct LogHistory {
+    pub lines: Vec<String>,
+}
+
+impl LogHistory {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}

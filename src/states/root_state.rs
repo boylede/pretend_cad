@@ -15,7 +15,7 @@ use crate::{
     commands,
     common::reset_camera,
     components::{ActiveCamera, Color, Drawable, FullColor},
-    resources::{Layer, Layers, LineType, LineTypes, ViewInfo},
+    resources::{Layer, Layers, LineType, LineTypes, ViewInfo, LogHistory},
     states::{CommandEntryState, PanState},
 };
 
@@ -32,6 +32,7 @@ impl SimpleState for RootState {
         w.insert(DebugLines::new());
         w.insert(DebugLinesParams { line_width: 0.5 });
         w.insert(ViewInfo::default());
+        w.insert(LogHistory::new());
 
         let continous_line = LineType {
             draw_line: LineType::line_type_continous,
