@@ -141,7 +141,7 @@ impl SimpleState for RootState {
                                     MouseScrollDelta::LineDelta(_x, y) => {
                                         {
                                             let mut view_info = w.write_resource::<ViewInfo>();
-                                            view_info.zoom(*y);
+                                            view_info.zoom(*y as i32);
                                         }
                                         // println!("got mousewheel linedelta of {}", y);
                                         reset_camera(w);
@@ -219,7 +219,7 @@ impl SimpleState for RootState {
                                 // println!("scroll moved");
                                 {
                                     let mut view_info = w.write_resource::<ViewInfo>();
-                                    view_info.zoom(-1.0)
+                                    view_info.zoom(-1)
                                 }
                                 reset_camera(w);
                             }
